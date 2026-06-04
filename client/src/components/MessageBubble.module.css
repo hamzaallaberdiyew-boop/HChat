@@ -1,0 +1,24 @@
+.myMessage {
+  align-self: flex-end;
+  background-color: #667eea;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 18px 18px 4px 18px;
+  max-width: 60%;
+  font-size: 27px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.otherMessage {
+  align-self: flex-start;
+  background-color: #ffffff;
+  color: #2d3748;
+  padding: 10px 16px;
+  border-radius: 18px 18px 18px 4px;
+  max-width: 60%;
+  font-size: 27px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}

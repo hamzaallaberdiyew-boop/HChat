@@ -1,0 +1,69 @@
+.div{
+    background-color: rgb(186, 221, 241);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;    
+}
+
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  background-color: #c7cbe0;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 30px;
+  color: #2d3748;
+}
+
+.chatName {
+  display: flex;
+  align-items: center;
+  padding: 12px 8px;
+  cursor: pointer;
+  gap: 12px;
+  background-color: rgb(255, 255, 255);
+  height: 6vh;
+
+}
+
+.chatName:hover {
+  background-color: #e2e8f0;
+}
+
+.onlineDot {
+  width: 18px;
+  height: 18px;
+  background-color: #48bb78;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  border: 2px solid #f0f4f8;
+}
+
+.messageList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 16px;
+  gap: 8px;
+  background-color: #f0f4f8;
+}
