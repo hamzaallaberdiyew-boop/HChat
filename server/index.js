@@ -9,6 +9,8 @@ import {Server} from 'socket.io';
 
 dotenv.config();
 
+const port = process.env.PORT || 5000;
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -50,4 +52,4 @@ io.on('connection', (socket) => {
   });
 });
 
-httpServer.listen(5000, () => console.log('Server on port 5000'));
+httpServer.listen(port, () => console.log('Server on port 5000'));

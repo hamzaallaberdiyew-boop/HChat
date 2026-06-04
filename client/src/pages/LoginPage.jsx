@@ -18,7 +18,7 @@ function LoginPage(){
         } else{
             setLoading(false);
         }
-    }, []);
+    }, [navigate]);
 
     if(loading) return null;
 

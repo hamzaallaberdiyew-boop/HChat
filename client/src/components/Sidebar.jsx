@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import styles from './Sidebar.module.css';
-import { Link } from 'react-router-dom';
 
 function Sidebar(props){
 

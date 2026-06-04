@@ -1,6 +1,5 @@
 import { useState } from "react";
 import styles from './Chat.module.css'
-import { Link } from 'react-router-dom';
 import Sidebar from "../components/Sidebar";
 import MessageList from "../components/MessageList"
 import { useEffect } from 'react';
@@ -22,7 +21,7 @@ function Chat(){
             socket.emit('join', myId);
             setLoading(false);
         }
-    }, []);
+    }, [navigate]);
 
     if(loading) return null;
 

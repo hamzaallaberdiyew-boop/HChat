@@ -18,7 +18,7 @@ function RegisterPage(){
         } else{
             setLoading(false);
         }
-    }, []);
+    }, [navigate]);
 
     if(loading) return null;
 
@@ -41,7 +41,7 @@ function RegisterPage(){
     }
 
     async function handleSubmit(){
-        if(password!=secondPassword){
+        if(password!==secondPassword){
             setError("Passwords do not match!")
         } else{
             setError("");
