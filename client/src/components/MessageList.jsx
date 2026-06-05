@@ -28,7 +28,7 @@ function MessageList(props){
     const data = await response.json();
     setMessages(data);
     } catch(err){
-        // handle error later
+        console.error('Fetch messages error:', err);
     } finally{
         setLoading(false);
     }

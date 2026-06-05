@@ -14,11 +14,14 @@ router.get('/users', verifyToken, async (req, res) => {
     );
     res.status(200).json(result.rows);
   } catch(err) {
+    console.error('Get users error:', err);
     res.status(500).json({ error: 'Something went wrong' });
   }
 });
 
 router.post('/register', async (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
     if(!username || !password) {
         return res.status(400).json({ error: 'Please fill in all fields!' });
     }
@@ -28,8 +31,6 @@ router.post('/register', async (req, res) => {
     if(password.length < 6) {
         return res.status(400).json({ error: 'Password must be at least 6 characters!' });
     }
-    const username = req.body.username;
-    const password = req.body.password;
     try {
         const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
         if(result.rows.length > 0){
@@ -45,6 +46,7 @@ router.post('/register', async (req, res) => {
             );
             res.status(200).json({ token });
     }} catch(err) {
+        console.error('Register error:', err);
         res.status(500).json({ error: 'Something went wrong' });
     }
 })
@@ -68,6 +70,7 @@ router.post('/login', async (req, res) => {
     } else{
         return res.status(400).json({error:'Invalid username or password!'})
     }} catch(err) {
+        console.error('Login error:', err);
         res.status(500).json({ error: 'Something went wrong' });
     }
 })

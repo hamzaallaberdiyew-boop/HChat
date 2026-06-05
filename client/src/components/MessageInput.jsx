@@ -36,7 +36,7 @@ function MessageInput(props){
         setText('');
         props.onMessageSent();
     } catch(err){
-        // handle error later
+        console.error('Send message error:', err);
     }
     }
 
