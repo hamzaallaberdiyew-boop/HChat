@@ -33,6 +33,11 @@ function LoginPage(){
     }
 
     async function handleSubmit(){
+        if(!username.trim() || !password.trim()) {
+            setError('Please fill in all fields!');
+            return;
+        }
+
         const response = await fetch('http://localhost:5000/api/login', {
                 method: 'POST',
                 headers: {

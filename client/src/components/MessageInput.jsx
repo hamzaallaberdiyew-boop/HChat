@@ -14,7 +14,7 @@ function MessageInput(props){
     async function handleClick(){
         if(!text.trim()) return;
 
-        const token = localStorage.getItem('token');
+        try {const token = localStorage.getItem('token');
         const myId = JSON.parse(atob(token.split('.')[1])).id;
 
         await fetch('http://localhost:5000/api/messages', {
@@ -35,6 +35,9 @@ function MessageInput(props){
         });
         setText('');
         props.onMessageSent();
+    } catch(err){
+        // handle error later
+    }
     }
 
     return (

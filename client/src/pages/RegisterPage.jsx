@@ -25,24 +25,30 @@ function RegisterPage(){
     function changeUsername(event){
         const newUsername = event.target.value;
         setUsername(newUsername);
-        console.log(newUsername);
     }
 
     function changePassword(event){
         const newPassword = event.target.value;
         setPassword(newPassword);
-        console.log(newPassword);
     }
 
     function changeSecondPassword(event){
         const secPassword = event.target.value;
         setSecondPassword(secPassword);
-        console.log(secPassword);
     }
 
     async function handleSubmit(){
+        if(username.length<3){
+            setError('Username must be at least 3 characters!');
+            return;
+        }
+        if(password.length<6){
+            setError('Password must be at least 6 characters!');
+            return;
+        }
         if(password!==secondPassword){
-            setError("Passwords do not match!")
+            setError("Passwords do not match!");
+            return;
         } else{
             setError("");
             const response = await fetch('http://localhost:5000/api/register', {

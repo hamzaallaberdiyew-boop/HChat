@@ -5,7 +5,8 @@ import MessageInput from './MessageInput';
 import socket from '../socket';
 
 function MessageList(props){
-    const [messages, setMessages] = useState([])
+    const [messages, setMessages] = useState([]);
+    const [loading, setLoading] = useState(false);
     const currUser = props.selectedUser;
     const token = localStorage.getItem('token');
     const myId = JSON.parse(atob(token.split('.')[1])).id;
@@ -13,8 +14,9 @@ function MessageList(props){
     useEffect(() => {
     async function fetchMessages() {
     if(!currUser) return;
+    setLoading(true);
     
-    const token = localStorage.getItem('token');
+    try{const token = localStorage.getItem('token');
 
     
     const response = await fetch(`http://localhost:5000/api/messages/${currUser.id}`, {
@@ -25,6 +27,11 @@ function MessageList(props){
     
     const data = await response.json();
     setMessages(data);
+    } catch(err){
+        // handle error later
+    } finally{
+        setLoading(false);
+    }
   }
   
   fetchMessages();
@@ -38,13 +45,16 @@ function MessageList(props){
     return () => {
         socket.off('receiveMessage');
     };
-}, []);
+    }, []);
 
-    if(!currUser) return (
-    <div className={styles.div}>
-      <p>Select a user to start chatting</p>
-    </div>
-  );
+    if(!currUser) {
+        return (<div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>💬</div>
+            <h2 className={styles.emptyTitle}>Welcome to HChat!</h2>
+            <p className={styles.emptyText}>Select a conversation to start chatting</p>
+        </div>
+        );
+    }
 
     return (
         <div className={styles.div}>
@@ -56,9 +66,11 @@ function MessageList(props){
                 <span className={styles.name}>{currUser.username}</span>
             </div>
             <div className={styles.messageList}>
-                {messages.map((message) => (
+                {loading ? (
+                    <p className={styles.loadingText}>Loading messages...</p>
+                ) : (messages.map((message) => (
                     <MessageBubble key={message.id} text={message.content} sender={message.sender_id === myId ? "me" : "other"}/>
-                ))}
+                )))}
             </div>
             <MessageInput selectedUser={currUser} onMessageSent={props.onMessageSent}/>
         </div>

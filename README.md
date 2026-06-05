@@ -1,51 +1,58 @@
 # HChat
 
-HChat is a simple real-time chat application built with React, Node.js, Express, and Socket.IO.
-
-This is my first full-stack project using JavaScript technologies.
+A full-stack real-time chat application built with React, Node.js, PostgreSQL, and Socket.IO.
 
 ## Features
 
-* Real-time messaging
-* Client-server communication
-* Responsive chat UI
+- User authentication with JWT tokens
+- Secure password hashing with bcrypt
+- Real-time messaging with Socket.IO
+- Persistent message history in PostgreSQL
+- Protected routes for authenticated users
+- Online status indicators
 
 ## Tech Stack
 
-* React
-* Node.js
-* Express
-* Socket.IO
-* JavaScript
+**Frontend:** React.js, React Router, Socket.IO Client, CSS Modules
+
+**Backend:** Node.js, Express.js, Socket.IO, JWT, Bcrypt
+
+**Database:** PostgreSQL
+
+## Prerequisites
+
+- Node.js
+- PostgreSQL
 
 ## Installation
 
-```bash
+1. Clone the repository
 git clone https://github.com/hamzaallaberdiyew-boop/HChat.git
-cd HChat
-npm install
-```
 
-## Run the Project
-
-### Start server
-
-```bash
+2. Install server dependencies
 cd server
-npm start
-```
+npm install
 
-### Start client
-
-```bash
+3. Install client dependencies
 cd client
+npm install
+
+4. Create a `.env` file in the server folder with the following variables
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=hchat
+DB_USER=postgres
+DB_PASSWORD=yourpassword
+JWT_SECRET=yoursecretkey
+
+5. Start the server
+cd server
 npm run dev
-```
 
-## Future Improvements
+6. Start the client
+cd client
+npm start
 
-* Better UI
-* User profiles
-* Message saving
-* Emojis
-* Dark mode
+## Author
+
+Hamza Allaberdiyev

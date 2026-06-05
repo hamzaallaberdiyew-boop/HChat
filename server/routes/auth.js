@@ -19,6 +19,15 @@ router.get('/users', verifyToken, async (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
+    if(!username || !password) {
+        return res.status(400).json({ error: 'Please fill in all fields!' });
+    }
+    if(username.length < 3) {
+        return res.status(400).json({ error: 'Username must be at least 3 characters!' });
+    }
+    if(password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters!' });
+    }
     const username = req.body.username;
     const password = req.body.password;
     try {
