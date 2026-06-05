@@ -1,10 +1,8 @@
-import { useState } from "react";
 import styles from './MessageBubble.module.css';
-import { Link } from 'react-router-dom';
 
 function MessageBubble(props){
     function checkUser(){
-        if(props.sender=='me'){
+        if(props.sender==='me'){
             return true;
         } else{
             return false;
