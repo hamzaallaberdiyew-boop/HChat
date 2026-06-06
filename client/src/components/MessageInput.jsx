@@ -17,7 +17,7 @@ function MessageInput(props){
         try {const token = localStorage.getItem('token');
         const myId = JSON.parse(atob(token.split('.')[1])).id;
 
-        await fetch('http://localhost:5000/api/messages', {
+        await fetch(`${process.env.REACT_APP_API_URL}/api/messages`, {
             method: 'POST',
             headers: {
             'Content-Type': 'application/json',
