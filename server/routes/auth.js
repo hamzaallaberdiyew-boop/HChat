@@ -6,6 +6,23 @@ import verifyToken from '../middleware/auth.js';
 
 const router = express.Router();
 
+router.get('/users/search', verifyToken, async (req, res) => {
+    const username = req.query.username;
+    if(!username) {
+        return res.status(400).json({ error: 'Please enter a username!' });
+    }   
+    try {
+        const result = await pool.query('SELECT id, username FROM users WHERE username ILIKE $1 AND id != $2', [`%${username}%`, req.user.id]);
+        if(result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found!' });
+        }
+        res.status(200).json(result.rows);
+    } catch(err) {
+        console.error('Login error:', err);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+})
+
 router.get('/users', verifyToken, async (req, res) => {
   try {
     const result = await pool.query(

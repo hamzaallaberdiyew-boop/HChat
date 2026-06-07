@@ -12,7 +12,9 @@ dotenv.config();
 const port = process.env.PORT || 5000;
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://h-chat-nine.vercel.app']
+}));
 app.use(express.json());
 app.use('/api', authRoutes);
 app.use('/api/messages', messageRoutes);
@@ -30,7 +32,7 @@ pool.query('SELECT NOW()', (err, res) => {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'https://h-chat-nine.vercel.app'],
     methods: ['GET', 'POST']
   }
 });
