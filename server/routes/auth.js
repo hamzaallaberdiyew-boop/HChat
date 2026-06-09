@@ -25,10 +25,20 @@ router.get('/users/search', verifyToken, async (req, res) => {
 
 router.get('/users', verifyToken, async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, username FROM users WHERE id != $1',
-      [req.user.id]
-    );
+    const result = await pool.query(`
+      SELECT 
+        u.id,
+        u.username,
+        MAX(m.sent_time) as last_message_time
+      FROM users u
+      JOIN messages m ON (
+        (m.sender_id = u.id AND m.receiver_id = $1) OR
+        (m.receiver_id = u.id AND m.sender_id = $1)
+      )
+      WHERE u.id != $1
+      GROUP BY u.id, u.username
+      ORDER BY last_message_time DESC
+    `, [req.user.id]);
     res.status(200).json(result.rows);
   } catch(err) {
     console.error('Get users error:', err);

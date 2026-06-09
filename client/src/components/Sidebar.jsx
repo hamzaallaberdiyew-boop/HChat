@@ -35,11 +35,16 @@ function Sidebar(props){
 
     useEffect(() => {
         async function fetchUsers(){
+            console.log('Fetching from:', `${process.env.REACT_APP_API_URL}/api/users`);
             const token = localStorage.getItem('token');
             const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users`, {
             headers: { Authorization: `Bearer ${token}` }
             });
             const data = await response.json();
+            if(!response.ok) {  
+                console.error('Failed to fetch users:', data.error);
+                return;
+            }
             const usersWithOnline = data.map(user => ({ ...user, online: true }));
             setUsers(usersWithOnline);
         }
