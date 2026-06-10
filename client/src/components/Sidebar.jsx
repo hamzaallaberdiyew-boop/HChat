@@ -49,7 +49,7 @@ function Sidebar(props){
             setUsers(usersWithOnline);
         }
         fetchUsers();
-    }, [])
+    }, [props.refreshUsers])
 
     function handleClick(user){
         props.onSelectUser(user);

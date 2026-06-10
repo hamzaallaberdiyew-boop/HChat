@@ -8,6 +8,7 @@ import socket from '../socket';
 
 function Chat(){
     const navigate = useNavigate();
+    const [refreshUsers, setRefreshUsers] = useState(0);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState("");
     const [refresh, setRefresh] = useState(0);
@@ -29,8 +30,9 @@ function Chat(){
         <div className={styles.container}>
         <Sidebar onSelectUser={setSelectedUser}/>
         <div className={styles.chatArea}>
-            <MessageList selectedUser={selectedUser} refresh={refresh}
-  onMessageSent={() => setRefresh(r => r + 1)}/>
+            <MessageList selectedUser={selectedUser} refresh={refresh} refreshUsers={refreshUsers}
+  onMessageSent={() => {setRefresh(r => r + 1); setRefreshUsers(r => r + 1);}
+  }/>
         </div>
         </div>
     );
