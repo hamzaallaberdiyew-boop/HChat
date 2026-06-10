@@ -35,7 +35,7 @@ function MessageList(props){
   }
   
   fetchMessages();
-}, [currUser, props.refresh])
+}, [currUser])
 
     useEffect(() => {
     socket.on('receiveMessage', (message) => {
