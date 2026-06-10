@@ -28,9 +28,9 @@ function Chat(){
 
     return (
         <div className={styles.container}>
-        <Sidebar onSelectUser={setSelectedUser}/>
+        <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers}/>
         <div className={styles.chatArea}>
-            <MessageList selectedUser={selectedUser} refresh={refresh} refreshUsers={refreshUsers}
+            <MessageList selectedUser={selectedUser} refresh={refresh}
   onMessageSent={() => {setRefresh(r => r + 1); setRefreshUsers(r => r + 1);}
   }/>
         </div>
