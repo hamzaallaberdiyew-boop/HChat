@@ -43,7 +43,7 @@ function MessageInput(props){
     return (
         <div className={styles.div}>
             <input placeholder='Type a message...' value={text} className={styles.hChat} onChange={changeText}></input>
-            <button className={styles.button} onClick={handleClick} onKeyDown={(event) => {if (event==='enter') {handleClick();}}}><IoSend /></button>
+            <button className={styles.button} onClick={handleClick} onKeyDown={(event) => {if (event==='Enter') {handleClick();}}}><IoSend /></button>
         </div>
     );
 }
