@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './MessageList.module.css';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
@@ -7,9 +7,17 @@ import socket from '../socket';
 function MessageList(props){
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
+    const messageListRef = useRef(null);
     const currUser = props.selectedUser;
     const token = localStorage.getItem('token');
     const myId = JSON.parse(atob(token.split('.')[1])).id;
+
+    useEffect(() => {
+    if (messageListRef.current) {
+        messageListRef.current.scrollTop =
+            messageListRef.current.scrollHeight;
+    }
+}, [messages]);
 
     useEffect(() => {
     async function fetchMessages() {
@@ -65,7 +73,7 @@ function MessageList(props){
                 </div>
                 <span className={styles.name}>{currUser.username}</span>
             </div>
-            <div className={styles.messageList}>
+            <div className={styles.messageList} ref={messageListRef}>
                 {loading ? (
                     <p className={styles.loadingText}>Loading messages...</p>
                 ) : (messages.map((message) => (
