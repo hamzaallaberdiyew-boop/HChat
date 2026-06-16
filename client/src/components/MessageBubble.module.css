@@ -2,9 +2,9 @@
   align-self: flex-end;
   background-color: #667eea;
   color: white;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 18px 18px 4px 18px;
-  max-width: 60%;
+  max-width: 40%;
   font-size: 14px;
   line-height: 1.5;
   word-wrap: break-word;
@@ -14,9 +14,9 @@
   align-self: flex-start;
   background-color: #ffffff;
   color: #2d3748;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 18px 18px 18px 4px;
-  max-width: 60%;
+  max-width: 40%;
   font-size: 14px;
   line-height: 1.5;
   word-wrap: break-word;
@@ -24,9 +24,7 @@
 }
 
 .time {
-  font-size: 11px;
-  opacity: 0.7;
-  display: block;
-  text-align: right;
-  margin-top: 4px;
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 6px;
 }

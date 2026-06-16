@@ -35,7 +35,6 @@ function Sidebar(props){
 
     useEffect(() => {
         async function fetchUsers(){
-            console.log('Fetching from:', `${process.env.REACT_APP_API_URL}/api/users`);
             const token = localStorage.getItem('token');
             const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -66,8 +65,7 @@ function Sidebar(props){
             <div className={styles.avatar}>{user.username[0]}</div>
             {user.online && <div className={styles.onlineDot}></div>}
         </div>
-        <span className={styles.name}>{user.username}</span>
-            <span className={styles.time}>{user.time}</span>
+            <span className={styles.name}>{user.username}</span>
         </div>))}</div>
         <p className={styles.copyright}>© 2026 HChat</p>
     </div>);
