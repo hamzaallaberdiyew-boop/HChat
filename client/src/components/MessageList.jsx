@@ -77,7 +77,7 @@ function MessageList(props){
                 {loading ? (
                     <p className={styles.loadingText}>Loading messages...</p>
                 ) : (messages.map((message) => (
-                    <MessageBubble key={message.id} text={message.content} sender={message.sender_id === myId ? "me" : "other"}/>
+                    <MessageBubble key={message.id} text={message.content} sender={message.sender_id === myId ? "me" : "other"} time={message.sent_time}/>
                 )))}
             </div>
             <MessageInput selectedUser={currUser} onMessageSent={props.onMessageSent}/>
