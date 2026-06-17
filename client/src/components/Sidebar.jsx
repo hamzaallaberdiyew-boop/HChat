@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 function Sidebar(props){
 
     const token = localStorage.getItem('token');
-    const myUsername = JSON.parse(atob(token.split('.')[1])).username;
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -56,11 +55,6 @@ function Sidebar(props){
 
     function handleClick(user){
         props.onSelectUser(user);
-    }
-
-    function handleLogOut(){
-        localStorage.removeItem('token');
-        navigate('/login');
     }
 
     return (<div className={styles.div}>

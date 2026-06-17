@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import styles from './Profile.module.css';
 import { useNavigate } from 'react-router-dom';
 import { LuLogOut, LuChevronRight, LuChevronDown, LuSettings, LuMessageCircle } from 'react-icons/lu';
