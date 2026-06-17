@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import styles from './Sidebar.module.css';
+import { useNavigate } from 'react-router-dom';
 
 function Sidebar(props){
 
+    const token = localStorage.getItem('token');
+    const myUsername = JSON.parse(atob(token.split('.')[1])).username;
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [searchError, setSearchError] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         if(!search.trim()) {
@@ -54,8 +58,12 @@ function Sidebar(props){
         props.onSelectUser(user);
     }
 
+    function handleLogOut(){
+        localStorage.removeItem('token');
+        navigate('/login');
+    }
+
     return (<div className={styles.div}>
-        <h1 className={styles.appName}>H·Chat</h1>
     <input type="search" value={search} className={styles.searchBar} id="site-search" name="q" placeholder="Search" aria-label="Search through site content" onChange={(e) => setSearch(e.target.value)}></input>
     <div className={styles.userList}>
         {searchError && <p className={styles.searchError}>{searchError}</p>}
@@ -67,7 +75,7 @@ function Sidebar(props){
         </div>
             <span className={styles.name}>{user.username}</span>
         </div>))}</div>
-        <p className={styles.copyright}>© 2026 HChat</p>
+        
     </div>);
 }
 

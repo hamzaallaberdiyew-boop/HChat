@@ -2,6 +2,7 @@ import { useState } from "react";
 import styles from './Chat.module.css'
 import Sidebar from "../components/Sidebar";
 import MessageList from "../components/MessageList"
+import Profile from "../components/Profile";
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import socket from '../socket';
@@ -12,6 +13,7 @@ function Chat(){
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState("");
     const [refresh, setRefresh] = useState(0);
+    const [showSidebar, setShowSidebar] = useState(true);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -28,7 +30,8 @@ function Chat(){
 
     return (
         <div className={styles.container}>
-        <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers}/>
+        <Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/>
+        {showSidebar && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers}/>}
         <div className={styles.chatArea}>
             <MessageList selectedUser={selectedUser} refresh={refresh}
   onMessageSent={() => {setRefresh(r => r + 1); setRefreshUsers(r => r + 1);}
