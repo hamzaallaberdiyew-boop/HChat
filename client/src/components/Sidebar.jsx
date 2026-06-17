@@ -3,13 +3,10 @@ import styles from './Sidebar.module.css';
 import { useNavigate } from 'react-router-dom';
 
 function Sidebar(props){
-
-    const token = localStorage.getItem('token');
     const [users, setUsers] = useState([]);
     const [search, setSearch] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [searchError, setSearchError] = useState('');
-    const navigate = useNavigate();
 
     useEffect(() => {
         if(!search.trim()) {
