@@ -30,6 +30,14 @@ function Chat(){
         }
     }, [navigate]);
 
+    useEffect(() => {
+    function handleResize() {
+        setIsMobile(window.innerWidth <= 768);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     if(loading) return null;
 
     return (
