@@ -3,23 +3,22 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #e8f4fd;
+  background-color: #f1f3f4;
 }
 
 .card {
-  background: #ffffff; 
-  padding: 40px;
-  border-radius: 10px;
-  width: 380px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  padding: 40px 36px;
+  border-radius: 8px;
+  width: 360px;
+  border: 1px solid #dadce0;
 }
 
 .title {
   text-align: center;
-  margin-bottom: 24px;
-  font-size: 22px;
-  font-weight: 700;
-  color: #2d3748;
+  font-size: 13px;
+  color: #5f6368;
+  margin-bottom: 28px;
 }
 
 .input {

@@ -3,6 +3,8 @@ import styles from './MessageList.module.css';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import socket from '../socket';
+import {LuArrowLeft } from 'react-icons/lu';
+
 
 function MessageList(props){
     const [messages, setMessages] = useState([]);
@@ -67,6 +69,7 @@ function MessageList(props){
     return (
         <div className={styles.div}>
             <div className={styles.chatName}>
+                {props.showBack && <button className={styles.backBtn} onClick={() => {props.backFunc("")}}><LuArrowLeft size={20} /></button>}
                 <div className={styles.avatarWrapper}>
                             <div className={styles.avatar}>{currUser.username[0]}</div>
                             {currUser.online && <div className={styles.onlineDot}></div>}

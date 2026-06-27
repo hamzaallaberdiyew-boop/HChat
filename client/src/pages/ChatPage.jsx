@@ -14,6 +14,10 @@ function Chat(){
     const [selectedUser, setSelectedUser] = useState("");
     const [refresh, setRefresh] = useState(0);
     const [showSidebar, setShowSidebar] = useState(true);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const showSidebarF = (isMobile && !selectedUser) || (!isMobile && showSidebar);
+    const showChat = (isMobile && selectedUser) || (!isMobile)
+    const showBack = isMobile;
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -31,12 +35,12 @@ function Chat(){
     return (
         <div className={styles.container}>
         <Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/>
-        {showSidebar && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers}/>}
-        <div className={styles.chatArea}>
-            <MessageList selectedUser={selectedUser} refresh={refresh}
+        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers}/>}
+        {showChat && <div className={styles.chatArea}>
+            <MessageList showBack={showBack} selectedUser={selectedUser} backFunc={setSelectedUser} refresh={refresh}
   onMessageSent={() => {setRefresh(r => r + 1); setRefreshUsers(r => r + 1);}
   }/>
-        </div>
+        </div>}
         </div>
     );
 }
