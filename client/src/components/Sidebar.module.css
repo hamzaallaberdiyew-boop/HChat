@@ -1,5 +1,5 @@
 .div{
-    width: 375px;
+    width:100%;
     height: 100vh;
     background-color: #e1e4e8;
     display: flex;
@@ -9,6 +9,12 @@
     overflow: hidden;
     border-right: 1px solid #e2e8f0;
     flex-shrink: 0;
+}
+
+@media(min-width: 768px){
+  .div{
+    width:375px;
+  }
 }
 
 .searchBar {

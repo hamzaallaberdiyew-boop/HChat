@@ -42,13 +42,14 @@ function Chat(){
 
     return (
         <div className={styles.container}>
-        <Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/>
+        {!isMobile && <div className={styles.profileSection}><Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/></div>}
+        <div className={styles.contentSection}>
         {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers}/>}
         {showChat && <div className={styles.chatArea}>
             <MessageList showBack={showBack} selectedUser={selectedUser} backFunc={setSelectedUser} refresh={refresh}
   onMessageSent={() => {setRefresh(r => r + 1); setRefreshUsers(r => r + 1);}
   }/>
-        </div>}
+        </div>}</div>
         </div>
     );
 }

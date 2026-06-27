@@ -13,3 +13,26 @@
     height: 100vh;
     overflow: hidden;
 }
+
+.contentSection {
+    flex: 1;
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+}
+
+@media( max-width: 768px){
+    .container {
+        display: flex;
+        flex-direction: row;
+    }
+    .profileSection{
+        width:25%;
+        flex-shrink: 0;
+    }
+
+    .contentSection{
+        width:75%;
+        flex:1;
+    }
+}
