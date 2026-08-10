@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import styles from './Sidebar.module.css';
+import socket from '../socket';
 
 function Sidebar(props) {
     const [users, setUsers] = useState([]);
@@ -40,7 +41,7 @@ function Sidebar(props) {
     useEffect(() => {
         async function fetchConversations() {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/conversations/latest`, {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/conversations/latest`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await response.json();
@@ -53,6 +54,30 @@ function Sidebar(props) {
         }
         fetchConversations();
     }, [props.refreshUsers]);
+
+    // NEW: live-update the sidebar when a message arrives over the socket
+    useEffect(() => {
+        function handleReceiveMessage(message) {
+            const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
+
+            setUsers(prevUsers => {
+                const existing = prevUsers.find(u => u.id === otherUserId);
+
+                const updatedUser = {
+                    ...(existing || { id: otherUserId, username: message.sender_username, online: true }),
+                    last_message: message.content,
+                    last_message_time: message.sent_time,
+                    sender_id: message.sender_id
+                };
+
+                const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
+                return [updatedUser, ...withoutThisUser];
+            });
+        }
+
+        socket.on('receiveMessage', handleReceiveMessage);
+        return () => socket.off('receiveMessage', handleReceiveMessage);
+    }, [myId]);
 
     function handleClick(user) {
         props.onSelectUser(user);
@@ -77,7 +102,7 @@ function Sidebar(props) {
                             <span className={styles.name}>{user.username}</span>
                             {user.last_message && (
                                 <span className={styles.preview}>
-                                    {user.sender_id === myId ? 'Me' : user.username}: {user.last_message.length > 40 ? user.last_message.slice(0, 40) + '…' : user.last_message}
+                                    <strong>{user.sender_id === myId ? 'Me' : user.username}:</strong> {user.last_message.length > 40 ? user.last_message.slice(0, 40) + '…' : user.last_message}
                                 </span>
                             )}
                         </div>
