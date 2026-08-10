@@ -1,13 +1,13 @@
-.chatArea{
+.chatArea {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     height: 100vh;
+    background-color: var(--bg-app);
 }
 
-
-.container{
+.container {
     display: flex;
     flex-direction: row;
     height: 100vh;
@@ -21,18 +21,17 @@
     overflow: hidden;
 }
 
-@media( max-width: 768px){
+@media (max-width: 768px) {
     .container {
         display: flex;
         flex-direction: row;
     }
-    .profileSection{
-        width:25%;
+    .profileSection {
+        width: 25%;
         flex-shrink: 0;
     }
-
-    .contentSection{
-        width:75%;
-        flex:1;
+    .contentSection {
+        width: 75%;
+        flex: 1;
     }
 }

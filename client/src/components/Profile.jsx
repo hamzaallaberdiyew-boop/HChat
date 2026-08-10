@@ -30,10 +30,9 @@ function Profile(props){
                 <LuMessageCircle size={18} />
                 Chat
             </button>
-            <button className={styles.button} onClick={handleSettings}>
+            <button className={styles.button} onClick={() => navigate('/settings')}>
                 <LuSettings size={18} />
                 Settings
-                {settingsOpen ? <LuChevronDown size={18} /> : <LuChevronRight size={18} />}
             </button>
             {settingsOpen && <button className={styles.button} onClick={handleLogOut}>
                 <LuLogOut size={18} />

@@ -1,0 +1,114 @@
+.page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #b7c4d9 0%, #9baccb 100%);
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 48px;
+}
+
+.logo {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: #171212;
+    letter-spacing: 0.5px;
+}
+
+.dot {
+    color: #4f5fae;
+}
+
+.navButtons {
+    display: flex;
+    gap: 12px;
+}
+
+.hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 24px;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.headline {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 48px;
+    line-height: 1.15;
+    color: #171212;
+    margin: 0 0 16px;
+}
+
+.subhead {
+    font-size: 16px;
+    color: #3a4066;
+    margin: 0 0 32px;
+    max-width: 460px;
+}
+
+.ctaRow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.primaryButton {
+    background: #4f5fae;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.primaryButton:hover {
+    background: #414d94;
+    transform: translateY(-1px);
+}
+
+.ghostButton {
+    background: transparent;
+    color: #23293b;
+    border: 1px solid #8fa0bd;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.ghostButton:hover {
+    background-color: rgba(255, 255, 255, 0.35);
+}
+
+.footer {
+    text-align: center;
+    font-size: 11px;
+    color: #56618a;
+    padding: 24px;
+}
+
+@media (max-width: 480px) {
+    .nav {
+        padding: 20px 24px;
+    }
+    .headline {
+        font-size: 32px;
+    }
+}

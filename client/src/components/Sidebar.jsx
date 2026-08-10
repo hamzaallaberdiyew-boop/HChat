@@ -32,22 +32,59 @@ function Sidebar(props){
         searchUsers();
     }, [search])
 
-    useEffect(() => {
-        async function fetchUsers(){
+     useEffect(() => {
+        async function fetchUsers() {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users`, {
-            headers: { Authorization: `Bearer ${token}` }
+
+            const usersResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/users`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-            const data = await response.json();
-            if(!response.ok) {  
-                console.error('Failed to fetch users:', data.error);
+            const usersData = await usersResponse.json();
+            if (!usersResponse.ok) {
+                console.error('Failed to fetch users:', usersData.error);
                 return;
             }
-            const usersWithOnline = data.map(user => ({ ...user, online: true }));
-            setUsers(usersWithOnline);
+
+            const convosResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/users/conversations/latest`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const convosData = await convosResponse.json();
+            if (!convosResponse.ok) {
+                console.error('Failed to fetch conversations:', convosData.error);
+            }
+
+            // build the merged list with your original loop approach
+            const merged = [];
+            for (let i = 0; i < usersData.length; i++) {
+                const user = usersData[i];
+                let lastMessage = undefined;
+                let lastMessageTime = undefined;
+                let lastSenderId = undefined;
+
+                if (convosResponse.ok) {
+                    for (let j = 0; j < convosData.length; j++) {
+                        if (convosData[j].other_user_id === user.id) {
+                            lastMessage = convosData[j].last_message;
+                            lastMessageTime = convosData[j].last_message_time;
+                            lastSenderId = convosData[j].sender_id;
+                            break;
+                        }
+                    }
+                }
+
+                merged.push({
+                    ...user,
+                    online: true,
+                    lastMessage,
+                    lastMessageTime,
+                    lastSenderId
+                });
+            }
+
+            setUsers(merged);
         }
         fetchUsers();
-    }, [props.refreshUsers])
+    }, [props.refreshUsers]);
 
     function handleClick(user){
         props.onSelectUser(user);

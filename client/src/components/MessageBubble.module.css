@@ -1,30 +1,42 @@
 .myMessage {
-  align-self: flex-end;
-  background-color: #667eea;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 18px 18px 4px 18px;
-  max-width: 40%;
-  font-size: 14px;
-  line-height: 1.5;
-  word-wrap: break-word;
+    align-self: flex-end;
+    background-color: var(--accent);
+    color: white;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 18px 18px 4px 18px;
+    max-width: 40%;
+    font-size: var(--fs-body);
+    line-height: 1.5;
+    word-wrap: break-word;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.myMessage:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(79, 95, 174, 0.25);
 }
 
 .otherMessage {
-  align-self: flex-start;
-  background-color: #ffffff;
-  color: #2d3748;
-  padding: 8px 12px;
-  border-radius: 18px 18px 18px 4px;
-  max-width: 40%;
-  font-size: 14px;
-  line-height: 1.5;
-  word-wrap: break-word;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    align-self: flex-start;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 18px 18px 18px 4px;
+    max-width: 40%;
+    font-size: var(--fs-body);
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.otherMessage:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .time {
-  font-size: 10px;
-  opacity: 0.6;
-  margin-left: 6px;
+    font-size: var(--fs-meta);
+    opacity: 0.6;
+    margin-left: var(--space-sm);
 }

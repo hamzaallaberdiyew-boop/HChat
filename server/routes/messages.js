@@ -1,44 +1,89 @@
-import express from 'express';
-import pool from '../db.js';
-import verifyToken from '../middleware/auth.js';
+import { useState, useEffect } from "react";
+import styles from './Sidebar.module.css';
 
-const router = express.Router();
+function Sidebar(props) {
+    const [users, setUsers] = useState([]);
+    const [search, setSearch] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchError, setSearchError] = useState('');
 
-router.post('/', verifyToken, async (req, res) => {
-    const myId = req.user.id;
-    const { receiver_id, content } = req.body;
-    if(!content || !receiver_id) {
-        return res.status(400).json({ error: 'Missing required fields!' });
+    useEffect(() => {
+        if (!search.trim()) {
+            setSearchResults([]);
+            setSearchError('');
+            return;
+        }
+        async function searchUsers() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/search?username=${search}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    setSearchError(data.error);
+                    setSearchResults([]);
+                } else {
+                    setSearchResults(data);
+                    setSearchError('');
+                }
+            } catch (err) {
+                console.error('Search error:', err);
+            }
+        }
+        searchUsers();
+    }, [search]);
+
+    useEffect(() => {
+        async function fetchConversations() {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/conversations/latest`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                console.error('Failed to fetch conversations:', data.error);
+                return;
+            }
+            const usersWithOnline = data.map(user => ({ ...user, online: true }));
+            setUsers(usersWithOnline);
+        }
+        fetchConversations();
+    }, [props.refreshUsers]);
+
+    function handleClick(user) {
+        props.onSelectUser(user);
     }
-    try{
-        const result = await pool.query('INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING *',
-      [myId, receiver_id, content]
-)
-    res.status(201).json(result.rows[0]);
-    } catch(err){
-        console.error('Send message error:', err);
-        res.status(500).json({ error: 'Something went wrong' });
-    }
-    
 
-})
-
-router.get('/:userId', verifyToken, async (req, res) => {
-    const myId = req.user.id;
-    const otherUserId = req.params.userId;
-    try {
-        const result = await pool.query(
-      `SELECT * FROM messages 
-       WHERE (sender_id = $1 AND receiver_id = $2)
-       OR (sender_id = $2 AND receiver_id = $1)
-       ORDER BY sent_time ASC`,
-      [myId, otherUserId]
+    return (
+        <div className={styles.div}>
+            <input type="search" value={search} className={styles.searchBar} id="site-search" name="q" placeholder="Search" aria-label="Search through site content" onChange={(e) => setSearch(e.target.value)} />
+            <div className={styles.userList}>
+                {searchError && <p className={styles.searchError}>{searchError}</p>}
+                {(search ? searchResults : users).map((user) => (
+                    <div
+                        key={user.id}
+                        className={user.id === props.selectedUserId ? `${styles.chatName} ${styles.chatNameActive}` : styles.chatName}
+                        onClick={() => { handleClick(user) }}
+                    >
+                        <div className={styles.avatarWrapper}>
+                            <div className={styles.avatar}>{user.username[0]}</div>
+                            {user.online && <div className={styles.onlineDot}></div>}
+                        </div>
+                        <div className={styles.nameBlock}>
+                            <span className={styles.name}>{user.username}</span>
+                            {user.last_message && (
+                                <span className={styles.preview}>
+                                    {user.sender_id === user.id ? 'You: ' : ''}
+                                    {user.last_message}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
-    res.status(200).json(result.rows);
-} catch(err) {
-        console.error('Get messages error:', err);
-        res.status(500).json({ error: 'Something went wrong' });
-    }
-})
+}
 
-export default router;
+export default Sidebar;
