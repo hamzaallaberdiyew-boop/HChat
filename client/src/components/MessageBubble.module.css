@@ -1,10 +1,26 @@
+.bubbleWrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 40%;
+    position: relative;
+    z-index: 0;
+}
+
+.raised {
+    z-index: 5;
+}
+
+.myMessage, .otherMessage {
+    position: relative;
+    max-width: 100%;
+}
+
 .myMessage {
     align-self: flex-end;
     background-color: var(--accent);
     color: white;
     padding: var(--space-sm) var(--space-md);
     border-radius: 18px 18px 4px 18px;
-    max-width: 40%;
     font-size: var(--fs-body);
     line-height: 1.5;
     word-wrap: break-word;
@@ -22,7 +38,6 @@
     color: var(--text-primary);
     padding: var(--space-sm) var(--space-md);
     border-radius: 18px 18px 18px 4px;
-    max-width: 40%;
     font-size: var(--fs-body);
     line-height: 1.5;
     word-wrap: break-word;
@@ -39,4 +54,217 @@
     font-size: var(--fs-meta);
     opacity: 0.6;
     margin-left: var(--space-sm);
+}
+
+.quotedReply {
+    font-size: 12px;
+    opacity: 0.75;
+    border-left: 2px solid currentColor;
+    padding-left: 6px;
+    margin-bottom: 4px;
+}
+
+/* Action triggers — all anchored to the bottom of the bubble */
+
+.reactTrigger {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.replyTrigger {
+    position: absolute;
+    bottom: -10px;
+    right: 16px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--text-secondary);
+}
+
+.menuTrigger {
+    position: absolute;
+    bottom: -10px;
+    right: 42px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--text-secondary);
+}
+
+.myMessage:hover .reactTrigger,
+.otherMessage:hover .reactTrigger,
+.myMessage:hover .replyTrigger,
+.otherMessage:hover .replyTrigger,
+.myMessage:hover .menuTrigger {
+    display: flex;
+}
+
+/* Popups — also anchored to the bottom */
+
+.reactionPicker {
+    position: absolute;
+    bottom: -40px;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 4px 8px;
+    display: flex;
+    gap: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    z-index: 5;
+}
+
+.reactionOption {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px;
+    border-radius: 50%;
+    transition: transform 0.1s ease;
+}
+
+.reactionOption:hover {
+    transform: scale(1.2);
+}
+
+.optionsMenu {
+    position: absolute;
+    bottom: -14px;
+    right: 40px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    z-index: 6;
+    overflow: hidden;
+    min-width: 100px;
+}
+
+.optionItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    text-align: left;
+}
+
+.optionItem:hover {
+    background: var(--bg-hover);
+}
+
+.optionDelete {
+    color: var(--danger);
+}
+
+/* Reaction badges */
+
+.reactionBadgeLeft, .reactionBadgeRight {
+    display: flex;
+    gap: 2px;
+    font-size: 13px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1px 6px;
+    margin-top: -8px;
+    width: fit-content;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.reactionBadgeLeft {
+    align-self: flex-start;
+    margin-left: 8px;
+}
+
+.reactionBadgeRight {
+    align-self: flex-end;
+    margin-right: 8px;
+}
+
+/* Edit mode */
+
+.editArea {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.editInput {
+    flex: 1;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    outline: none;
+    padding: 2px 0;
+}
+
+.editIconBtn {
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: inherit;
+    padding: 0;
+}
+
+.editedTag {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-left: 4px;
+    font-style: italic;
+}
+
+.deletedMessage {
+    font-size: var(--fs-body);
+    color: var(--text-muted);
+    padding: 8px 12px;
+    background: var(--bg-hover);
+    border-radius: 14px;
+}
+
+.otherMessage .reactionPicker,
+.otherMessage .optionsMenu {
+    left: 0;
+    right: auto;
 }

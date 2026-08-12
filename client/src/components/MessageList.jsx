@@ -13,6 +13,25 @@ function MessageList(props){
     const currUser = props.selectedUser;
     const token = localStorage.getItem('token');
     const myId = JSON.parse(atob(token.split('.')[1])).id;
+    const [replyingTo, setReplyingTo] = useState(null);
+
+    function handleReplyTrigger(message) {
+        setReplyingTo(message);
+    }
+
+    function handleCancelReply() {
+        setReplyingTo(null);
+    }
+
+    const [activeAction, setActiveAction] = useState(null); // { messageId, type } or null
+
+    function setActive(messageId, type) {
+        setActiveAction({ messageId, type });
+    }
+
+    function clearActive() {
+        setActiveAction(null);
+    }
 
     useEffect(() => {
     if (messageListRef.current) {
@@ -20,6 +39,28 @@ function MessageList(props){
             messageListRef.current.scrollHeight;
     }
 }, [messages]);
+
+useEffect(() => {
+    socket.on('receiveMessage', (message) => {
+    if (message.sender_id === currUser.id || message.receiver_id === currUser.id) {
+        setMessages(prev => [...prev, message]);
+    }
+});
+
+    socket.on('reactionUpdate', (updatedMessage) => {
+        setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
+    });
+
+    socket.on('messageUpdate', (updatedMessage) => {
+        setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
+    });
+
+    return () => {
+        socket.off('receiveMessage');
+        socket.off('reactionUpdate');
+        socket.off('messageUpdate');
+    };
+}, [currUser]);
 
     useEffect(() => {
     async function fetchMessages() {
@@ -47,16 +88,6 @@ function MessageList(props){
   fetchMessages();
 }, [currUser, props.refresh])
 
-    useEffect(() => {
-    socket.on('receiveMessage', (message) => {
-        setMessages(prev => [...prev, message]);
-    });
-
-    return () => {
-        socket.off('receiveMessage');
-    };
-    }, []);
-
     if(!currUser) {
         return (<div className={styles.emptyState}>
             <div className={styles.emptyIcon}>💬</div>
@@ -65,6 +96,68 @@ function MessageList(props){
         </div>
         );
     }
+
+    async function handleReact(messageId, emoji) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${messageId}/react`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ emoji })
+        });
+        const updatedMessage = await response.json();
+        if (!response.ok) {
+            console.error('React error:', updatedMessage.error);
+            return;
+        }
+        setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
+    } catch (err) {
+        console.error('React request failed:', err);
+    }
+}
+
+async function handleEdit(messageId, content) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${messageId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        });
+        const updatedMessage = await response.json();
+        if (!response.ok) {
+            console.error('Edit error:', updatedMessage.error);
+            return;
+        }
+        setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
+    } catch (err) {
+        console.error('Edit request failed:', err);
+    }
+}
+
+async function handleDelete(messageId) {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${messageId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const updatedMessage = await response.json();
+        if (!response.ok) {
+            console.error('Delete error:', updatedMessage.error);
+            return;
+        }
+        setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
+    } catch (err) {
+        console.error('Delete request failed:', err);
+    }
+}
 
     return (
         <div className={styles.div}>
@@ -80,10 +173,23 @@ function MessageList(props){
                 {loading ? (
                     <p className={styles.loadingText}>Loading messages...</p>
                 ) : (messages.map((message) => (
-                    <MessageBubble key={message.id} text={message.content} sender={message.sender_id === myId ? "me" : "other"} time={message.sent_time}/>
+                    <MessageBubble
+                        key={message.id}
+                        message={message}
+                        myId={myId}
+                        onReact={handleReact}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onReply={handleReplyTrigger}
+                        isPickerOpen={activeAction?.messageId === message.id && activeAction?.type === 'reaction'}
+                        isMenuOpen={activeAction?.messageId === message.id && activeAction?.type === 'menu'}
+                        isEditing={activeAction?.messageId === message.id && activeAction?.type === 'edit'}
+                        setActive={setActive}
+                        clearActive={clearActive}
+                    />
                 )))}
             </div>
-            <MessageInput selectedUser={currUser} onMessageSent={props.onMessageSent}/>
+            <MessageInput selectedUser={currUser} onMessageSent={props.onMessageSent} replyingTo={replyingTo} onCancelReply={handleCancelReply}/>
         </div>
     );
 }

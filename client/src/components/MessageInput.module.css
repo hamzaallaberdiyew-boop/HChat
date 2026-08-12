@@ -47,3 +47,40 @@
 .button:active {
     transform: scale(0.95);
 }
+
+.inputArea {
+    display: flex;
+    flex-direction: column;
+}
+
+.replyPreview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    font-size: var(--fs-meta);
+}
+
+.replyPreviewText {
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.replyCancelBtn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+}
+
+.replyCancelBtn:hover {
+    color: var(--text-primary);
+}
