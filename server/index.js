@@ -48,8 +48,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('sendMessage', (message) => {
+    io.to(message.sender_id.toString()).emit('receiveMessage', message);
     io.to(message.receiver_id.toString()).emit('receiveMessage', message);
-  });
+});
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);

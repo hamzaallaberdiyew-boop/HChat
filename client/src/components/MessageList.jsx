@@ -38,15 +38,18 @@ function MessageList(props){
         messageListRef.current.scrollTop =
             messageListRef.current.scrollHeight;
     }
-}, [messages]);
+}, [messages.length, currUser]);
 
 useEffect(() => {
     socket.on('receiveMessage', (message) => {
     if (message.sender_id === currUser.id || message.receiver_id === currUser.id) {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => {
+            const alreadyExists = prev.some(m => m.id === message.id);
+            if (alreadyExists) return prev;
+            return [...prev, message];
+        });
     }
 });
-
     socket.on('reactionUpdate', (updatedMessage) => {
         setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
     });
@@ -98,6 +101,17 @@ useEffect(() => {
     }
 
     async function handleReact(messageId, emoji) {
+    const myReactionColumn = messages.find(m => m.id === messageId)?.sender_id === myId
+        ? 'sender_reaction'
+        : 'receiver_reaction';
+
+    // optimistic update — apply the change to the screen immediately
+    setMessages(prev => prev.map(m => {
+        if (m.id !== messageId) return m;
+        const currentValue = m[myReactionColumn];
+        return { ...m, [myReactionColumn]: currentValue === emoji ? null : emoji };
+    }));
+
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${messageId}/react`, {
@@ -113,6 +127,7 @@ useEffect(() => {
             console.error('React error:', updatedMessage.error);
             return;
         }
+        // reconcile with the real server response, in case anything differs
         setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
     } catch (err) {
         console.error('React request failed:', err);
@@ -159,6 +174,18 @@ async function handleDelete(messageId) {
     }
 }
 
+    function handleOptimisticSend(optimisticMessage) {
+    setMessages(prev => [...prev, optimisticMessage]);
+}
+
+function handleSendConfirmed(tempId, realMessage) {
+    setMessages(prev => prev.map(m => m.id === tempId ? realMessage : m));
+}
+
+function handleSendFailed(tempId) {
+    setMessages(prev => prev.map(m => m.id === tempId ? { ...m, sending: false, failed: true } : m));
+}
+
     return (
         <div className={styles.div}>
             <div className={styles.chatName}>
@@ -189,7 +216,15 @@ async function handleDelete(messageId) {
                     />
                 )))}
             </div>
-            <MessageInput selectedUser={currUser} onMessageSent={props.onMessageSent} replyingTo={replyingTo} onCancelReply={handleCancelReply}/>
+            <MessageInput
+                selectedUser={currUser}
+                onMessageSent={props.onMessageSent}
+                replyingTo={replyingTo}
+                onCancelReply={handleCancelReply}
+                onOptimisticSend={handleOptimisticSend}
+                onSendConfirmed={handleSendConfirmed}
+                onSendFailed={handleSendFailed}
+            />
         </div>
     );
 }

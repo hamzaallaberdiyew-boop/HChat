@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import styles from './MessageBubble.module.css';
 import { LuEllipsisVertical, LuPencil, LuTrash2, LuCheck, LuX, LuReply } from 'react-icons/lu';
 
@@ -15,6 +15,9 @@ function MessageBubble(props) {
     const editing = props.isEditing;
 
     const hasReaction = message.sender_reaction || message.receiver_reaction;
+    const hasOpenPopup = pickerOpen || menuOpen;
+
+    const myReaction = isMe ? message.sender_reaction : message.receiver_reaction;
 
     useEffect(() => {
         if (!pickerOpen && !menuOpen) return;
@@ -79,13 +82,12 @@ function MessageBubble(props) {
     }
 
     return (
-         <div
-         ref={wrapperRef}
-        className={`${styles.bubbleWrapper} ${hasReaction ? styles.raised : ''}`}
-        style={{ alignSelf: isMe ? 'flex-end' : 'flex-start' }}
-    >
+        <div
+            ref={wrapperRef}
+            className={`${styles.bubbleWrapper} ${hasReaction ? styles.raised : ''} ${hasOpenPopup ? styles.popupOpen : ''}`}
+            style={{ alignSelf: isMe ? 'flex-end' : 'flex-start' }}
+        >
             <div className={isMe ? styles.myMessage : styles.otherMessage}>
-
                 {message.reply_content && (
                     <div className={styles.quotedReply}>
                         {message.reply_content.length > 40 ? message.reply_content.slice(0, 40) + '…' : message.reply_content}
@@ -117,9 +119,11 @@ function MessageBubble(props) {
 
                 {!editing && (
                     <>
-                        <button className={styles.reactTrigger} onClick={togglePicker}>
-                            🙂
-                        </button>
+                        {!hasReaction && (
+                            <button className={styles.reactTrigger} onClick={togglePicker}>
+                                🙂
+                            </button>
+                        )}
 
                         <button className={styles.replyTrigger} onClick={() => props.onReply(message)}>
                             <LuReply size={14} />
@@ -147,22 +151,26 @@ function MessageBubble(props) {
                 {pickerOpen && (
                     <div className={styles.reactionPicker}>
                         {REACTION_OPTIONS.map(emoji => (
-                            <button key={emoji} className={styles.reactionOption} onClick={() => handlePick(emoji)}>
+                            <button
+                                key={emoji}
+                                className={`${styles.reactionOption} ${myReaction === emoji ? styles.reactionOptionActive : ''}`}
+                                onClick={() => handlePick(emoji)}
+                            >
                                 {emoji}
                             </button>
                         ))}
                     </div>
                 )}
-            </div>
 
-            {(message.sender_reaction || message.receiver_reaction) && (
-                <div className={isMe ? styles.reactionBadgeRight : styles.reactionBadgeLeft}>
-                    {message.sender_reaction && <span>{message.sender_reaction}</span>}
-                    {message.receiver_reaction && <span>{message.receiver_reaction}</span>}
-                </div>
-            )}
+                {hasReaction && (
+                    <button className={styles.reactionBadge} onClick={togglePicker}>
+                        {message.sender_reaction && <span>{message.sender_reaction}</span>}
+                        {message.receiver_reaction && <span>{message.receiver_reaction}</span>}
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
 
-export default MessageBubble;
+export default memo(MessageBubble);

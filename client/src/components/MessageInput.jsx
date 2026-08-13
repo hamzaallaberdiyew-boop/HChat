@@ -14,47 +14,68 @@ function MessageInput(props) {
     }
 
     async function handleClick() {
-        if (!text.trim()) return;
+    if (!text.trim()) return;
 
-        try {
-            const token = localStorage.getItem('token');
-            const myId = JSON.parse(atob(token.split('.')[1])).id;
+    const token = localStorage.getItem('token');
+    const myId = JSON.parse(atob(token.split('.')[1])).id;
+    const messageText = text.trim();
 
-            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    receiver_id: currUser.id,
-                    content: text,
-                    reply_to_id: replyingTo ? replyingTo.id : null
-                })
-            });
+    // optimistic message — shown instantly with a temporary id
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage = {
+        id: tempId,
+        sender_id: myId,
+        receiver_id: currUser.id,
+        content: messageText,
+        sent_time: new Date().toISOString(),
+        reply_to_id: replyingTo ? replyingTo.id : null,
+        reply_content: replyingTo ? replyingTo.content : null,
+        reply_sender_id: replyingTo ? replyingTo.sender_id : null,
+        sender_reaction: null,
+        receiver_reaction: null,
+        edited: false,
+        deleted: false,
+        sending: true
+    };
 
-            const savedMessage = await response.json();
-            if (!response.ok) {
-                console.error('Send message error:', savedMessage.error);
-                return;
-            }
+    props.onOptimisticSend(optimisticMessage);
+    setText('');
+    props.onCancelReply();
 
-            // attach reply preview info locally so the sender's own bubble
-            // shows the quote immediately, without needing a refetch
-            const messageWithReplyInfo = {
-                ...savedMessage,
-                reply_content: replyingTo ? replyingTo.content : null,
-                reply_sender_id: replyingTo ? replyingTo.sender_id : null
-            };
+    try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                receiver_id: currUser.id,
+                content: messageText,
+                reply_to_id: replyingTo ? replyingTo.id : null
+            })
+        });
 
-            socket.emit('sendMessage', messageWithReplyInfo);
-            setText('');
-            props.onCancelReply();
-            props.onMessageSent();
-        } catch (err) {
-            console.error('Send message error:', err);
+        const savedMessage = await response.json();
+        if (!response.ok) {
+            console.error('Send message error:', savedMessage.error);
+            props.onSendFailed(tempId);
+            return;
         }
+
+        const messageWithReplyInfo = {
+            ...savedMessage,
+            reply_content: replyingTo ? replyingTo.content : null,
+            reply_sender_id: replyingTo ? replyingTo.sender_id : null
+        };
+
+        props.onSendConfirmed(tempId, messageWithReplyInfo);
+        socket.emit('sendMessage', messageWithReplyInfo);
+    } catch (err) {
+        console.error('Send message error:', err);
+        props.onSendFailed(tempId);
     }
+}
 
     return (
         <div className={styles.inputArea}>
