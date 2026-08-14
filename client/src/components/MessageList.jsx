@@ -49,7 +49,9 @@ useEffect(() => {
             return [...prev, message];
         });
     }
+    props.onLocalMessage?.(message);
 });
+
     socket.on('reactionUpdate', (updatedMessage) => {
         setMessages(prev => prev.map(m => m.id === updatedMessage.id ? { ...m, ...updatedMessage } : m));
     });
@@ -176,6 +178,7 @@ async function handleDelete(messageId) {
 
     function handleOptimisticSend(optimisticMessage) {
     setMessages(prev => [...prev, optimisticMessage]);
+    props.onLocalMessage?.(optimisticMessage);
 }
 
 function handleSendConfirmed(tempId, realMessage) {
@@ -192,7 +195,7 @@ function handleSendFailed(tempId) {
                 {props.showBack && <button className={styles.backBtn} onClick={() => {props.backFunc("")}}><LuArrowLeft size={20} /></button>}
                 <div className={styles.avatarWrapper}>
                             <div className={styles.avatar}>{currUser.username[0]}</div>
-                            {currUser.online && <div className={styles.onlineDot}></div>}
+                            {props.onlineUserIds?.has(currUser.id) && <div className={styles.onlineDot}></div>}
                 </div>
                 <span className={styles.name}>{currUser.username}</span>
             </div>

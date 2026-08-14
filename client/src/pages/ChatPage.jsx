@@ -15,6 +15,8 @@ function Chat(){
     const [refresh, setRefresh] = useState(0);
     const [showSidebar, setShowSidebar] = useState(true);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [latestMessage, setLatestMessage] = useState(null);
+    const [onlineUserIds, setOnlineUserIds] = useState(new Set());
     const showSidebarF = (isMobile && !selectedUser) || (!isMobile && showSidebar);
     const showChat = (isMobile && selectedUser) || (!isMobile)
     const showBack = isMobile;
@@ -31,6 +33,34 @@ function Chat(){
     }, [navigate]);
 
     useEffect(() => {
+    function handleOnlineList(userIds) {
+        setOnlineUserIds(new Set(userIds));
+    }
+
+    function handleUserOnline(userId) {
+        setOnlineUserIds(prev => new Set(prev).add(userId));
+    }
+
+    function handleUserOffline(userId) {
+        setOnlineUserIds(prev => {
+            const next = new Set(prev);
+            next.delete(userId);
+            return next;
+        });
+    }
+
+    socket.on('onlineUsersList', handleOnlineList);
+    socket.on('userOnline', handleUserOnline);
+    socket.on('userOffline', handleUserOffline);
+
+    return () => {
+        socket.off('onlineUsersList', handleOnlineList);
+        socket.off('userOnline', handleUserOnline);
+        socket.off('userOffline', handleUserOffline);
+    };
+}, []);
+
+    useEffect(() => {
     function handleResize() {
         setIsMobile(window.innerWidth <= 768);
     }
@@ -44,11 +74,13 @@ function Chat(){
         <div className={styles.container}>
         {!isMobile && <div className={styles.profileSection}><Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/></div>}
         <div className={styles.contentSection}>
-        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers}/>}
+        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers} incomingMessage={latestMessage} onlineUserIds={onlineUserIds} />}
         {showChat && <div className={styles.chatArea}>
             <MessageList showBack={showBack} selectedUser={selectedUser} backFunc={setSelectedUser} refresh={refresh}
-  onMessageSent={() => {setRefresh(r => r + 1); setRefreshUsers(r => r + 1);}
-  }/>
+                onMessageSent={() => { setRefresh(r => r + 1); setRefreshUsers(r => r + 1); }}
+                onLocalMessage={setLatestMessage}
+                onlineUserIds={onlineUserIds}
+            />
         </div>}</div>
         </div>
     );

@@ -49,11 +49,15 @@ function Sidebar(props) {
                 console.error('Failed to fetch conversations:', data.error);
                 return;
             }
-            const usersWithOnline = data.map(user => ({ ...user, online: true }));
+            const usersWithOnline = data.map(user => ({ ...user, online: props.onlineUserIds.has(user.id) }));
             setUsers(usersWithOnline);
         }
         fetchConversations();
     }, [props.refreshUsers]);
+
+    useEffect(() => {
+    setUsers(prev => prev.map(u => ({ ...u, online: props.onlineUserIds.has(u.id) })));
+}, [props.onlineUserIds]);
 
     // NEW: live-update the sidebar when a message arrives over the socket
     useEffect(() => {
@@ -82,6 +86,37 @@ function Sidebar(props) {
     function handleClick(user) {
         props.onSelectUser(user);
     }
+
+    function applyIncomingMessage(message) {
+    const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
+
+    setUsers(prevUsers => {
+        const existing = prevUsers.find(u => u.id === otherUserId);
+
+        const updatedUser = {
+            ...(existing || { id: otherUserId, username: message.sender_username, online: true }),
+            last_message: message.content,
+            last_message_time: message.sent_time,
+            sender_id: message.sender_id
+        };
+
+        const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
+        return [updatedUser, ...withoutThisUser];
+    });
+}
+
+useEffect(() => {
+    function handleReceiveMessage(message) {
+        applyIncomingMessage(message);
+    }
+    socket.on('receiveMessage', handleReceiveMessage);
+    return () => socket.off('receiveMessage', handleReceiveMessage);
+}, [myId]);
+
+useEffect(() => {
+    if (!props.incomingMessage) return;
+    applyIncomingMessage(props.incomingMessage);
+}, [props.incomingMessage]);
 
     return (
         <div className={styles.div}>

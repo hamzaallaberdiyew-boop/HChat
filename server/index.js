@@ -39,22 +39,69 @@ const io = new Server(httpServer, {
 
 app.set('io', io);
 
+// Tracks which socket IDs belong to each user, since one person can have
+// multiple tabs/devices connected at once. Map<userId, Set<socketId>>
+const onlineUsers = new Map();
+
+function markUserOnline(userId, socketId) {
+    if (!onlineUsers.has(userId)) {
+        onlineUsers.set(userId, new Set());
+    }
+    onlineUsers.get(userId).add(socketId);
+}
+
+function markUserOffline(userId, socketId) {
+    const sockets = onlineUsers.get(userId);
+    if (!sockets) return false;
+
+    sockets.delete(socketId);
+
+    if (sockets.size === 0) {
+        onlineUsers.delete(userId);
+        return true; // truly offline now, no more connections left
+    }
+    return false; // still has other tabs open, not actually offline
+}
+
+function isUserOnline(userId) {
+    return onlineUsers.has(userId);
+}
+
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+    console.log('User connected:', socket.id);
 
-  socket.on('join', (userId) => {
+    socket.on('join', (userId) => {
     socket.join(userId.toString());
+    socket.data.userId = userId;
+
+    const wasAlreadyOnline = isUserOnline(userId);
+    markUserOnline(userId, socket.id);
+
+    if (!wasAlreadyOnline) {
+        io.emit('userOnline', userId);
+    }
+
+    // tell THIS newly-connected socket who's already online, since they
+    // missed all the userOnline events that happened before they connected
+    socket.emit('onlineUsersList', Array.from(onlineUsers.keys()));
+
     console.log(`User ${userId} joined their room`);
-  });
-
-  socket.on('sendMessage', (message) => {
-    io.to(message.sender_id.toString()).emit('receiveMessage', message);
-    io.to(message.receiver_id.toString()).emit('receiveMessage', message);
 });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
+    socket.on('sendMessage', (message) => {
+        io.to(message.sender_id.toString()).emit('receiveMessage', message);
+        io.to(message.receiver_id.toString()).emit('receiveMessage', message);
+    });
 
-httpServer.listen(port, () => console.log('Server on port 5000'));
+        socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+        const userId = socket.data.userId;
+        if (userId) {
+            const trulyOffline = markUserOffline(userId, socket.id);
+            if (trulyOffline) {
+                io.emit('userOffline', userId);
+                console.log(`User ${userId} is now fully offline`);
+            }
+        }
+    });
+});
