@@ -51,6 +51,7 @@ function Sidebar(props) {
             }
             const usersWithOnline = data.map(user => ({ ...user, online: props.onlineUserIds.has(user.id) }));
             setUsers(usersWithOnline);
+            console.log('onlineUserIds:', props.onlineUserIds, 'sample user id:', data[0]?.id, typeof data[0]?.id);
         }
         fetchConversations();
     }, [props.refreshUsers]);
@@ -104,14 +105,6 @@ function Sidebar(props) {
         return [updatedUser, ...withoutThisUser];
     });
 }
-
-useEffect(() => {
-    function handleReceiveMessage(message) {
-        applyIncomingMessage(message);
-    }
-    socket.on('receiveMessage', handleReceiveMessage);
-    return () => socket.off('receiveMessage', handleReceiveMessage);
-}, [myId]);
 
 useEffect(() => {
     if (!props.incomingMessage) return;

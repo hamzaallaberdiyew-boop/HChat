@@ -33,11 +33,26 @@ function Chat(){
     }, [navigate]);
 
     useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        navigate('/login');
+        return;
+    }
+
+    const myId = JSON.parse(atob(token.split('.')[1])).id;
+
+    function handleConnect() {
+    console.log('[FRONTEND] socket connected, emitting join for', myId);
+    socket.emit('join', myId);
+}
+
     function handleOnlineList(userIds) {
+        console.log('[FRONTEND] received onlineUsersList:', userIds);
         setOnlineUserIds(new Set(userIds));
     }
 
     function handleUserOnline(userId) {
+        console.log('[FRONTEND] received userOnline:', userId);
         setOnlineUserIds(prev => new Set(prev).add(userId));
     }
 
@@ -49,16 +64,26 @@ function Chat(){
         });
     }
 
+    socket.on('connect', handleConnect);
     socket.on('onlineUsersList', handleOnlineList);
     socket.on('userOnline', handleUserOnline);
     socket.on('userOffline', handleUserOffline);
 
+    // if the socket is ALREADY connected by the time this effect runs
+    // (e.g. on fast reconnects), join immediately instead of waiting
+    if (socket.connected) {
+        socket.emit('join', myId);
+    }
+
+    setLoading(false);
+
     return () => {
+        socket.off('connect', handleConnect);
         socket.off('onlineUsersList', handleOnlineList);
         socket.off('userOnline', handleUserOnline);
         socket.off('userOffline', handleUserOffline);
     };
-}, []);
+}, [navigate]);
 
     useEffect(() => {
     function handleResize() {
