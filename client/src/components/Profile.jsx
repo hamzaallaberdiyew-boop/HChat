@@ -1,46 +1,44 @@
-import { useState } from "react";
 import styles from './Profile.module.css';
 import { useNavigate } from 'react-router-dom';
-import { LuLogOut, LuChevronRight, LuChevronDown, LuSettings, LuMessageCircle } from 'react-icons/lu';
+import { LuLogOut, LuSettings, LuMessageCircle } from 'react-icons/lu';
 
-function Profile(props){
+function Profile(props) {
+    const { setShowSidebar } = props; // Деструктурируем пропсы для чистоты кода
 
     const token = localStorage.getItem('token');
-    const myUsername = JSON.parse(atob(token.split('.')[1])).username;
+    const myUsername = token ? JSON.parse(atob(token.split('.')[1])).username : '';
     const navigate = useNavigate();
-    const [settingsOpen, setSettingsOpen] = useState(false);
 
-    function handleLogOut(){
+    function handleLogOut() {
         localStorage.removeItem('token');
         navigate('/login');
     }
 
-    function handleSettings(){
-        setSettingsOpen(prev => !prev)
-    }
-
-    return (<div className={styles.div}>
-        <h1 className={styles.appName}>H·Chat</h1>
-        <div className={styles.myProfile}>
+    return (
+        <div className={styles.div}>
+            <h1 className={styles.appName}>H·Chat</h1>
+            <div className={styles.myProfile}>
                 <div className={styles.myName}>
-                    <div className={styles.avatar}>{myUsername[0]}</div>
+                    <div className={styles.avatar}>{myUsername ? myUsername[0] : ''}</div>
                     <span className={styles.name}>{myUsername}</span>
                 </div>
-            <button className={styles.button} onClick={() => props.setShowSidebar(prev => !prev)}>
-                <LuMessageCircle size={18} />
-                Chat
-            </button>
-            <button className={styles.button} onClick={() => navigate('/settings')}>
-                <LuSettings size={18} />
-                Settings
-            </button>
-            {settingsOpen && <button className={styles.button} onClick={handleLogOut}>
-                <LuLogOut size={18} />
-                Logout
-            </button>}
+                <button className={styles.button} onClick={() => setShowSidebar(prev => !prev)}>
+                    <LuMessageCircle size={18} />
+                    Chat
+                </button>
+                <button className={styles.button} onClick={() => navigate('/settings')}>
+                    <LuSettings size={18} />
+                    Settings
+                </button>
+                {/* Кнопка Logout теперь отображается всегда и доступна для пользователя */}
+                <button className={styles.button} onClick={handleLogOut}>
+                    <LuLogOut size={18} />
+                    Logout
+                </button>
+            </div>
+            <p className={styles.copyright}>© 2026 HChat</p>
         </div>
-        <p className={styles.copyright}>© 2026 HChat</p>
-    </div>);
+    );
 }
 
 export default Profile;

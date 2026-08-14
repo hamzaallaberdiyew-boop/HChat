@@ -5,32 +5,44 @@ import { LuEllipsisVertical, LuPencil, LuTrash2, LuCheck, LuX, LuReply } from 'r
 const REACTION_OPTIONS = ['👍', '❤️', '😂', '😮', '😢'];
 
 function MessageBubble(props) {
-    const [editText, setEditText] = useState(props.message.content);
+    // 1. Деструктурируем все необходимые функции и переменные из props
+    const { 
+        message, 
+        myId, 
+        isPickerOpen: pickerOpen, 
+        isMenuOpen: menuOpen, 
+        isEditing: editing, 
+        clearActive, 
+        setActive, 
+        onReact, 
+        onEdit, 
+        onDelete, 
+        onReply 
+    } = props;
+
+    const [editText, setEditText] = useState(message.content);
     const wrapperRef = useRef(null);
 
-    const message = props.message;
-    const isMe = message.sender_id === props.myId;
-    const pickerOpen = props.isPickerOpen;
-    const menuOpen = props.isMenuOpen;
-    const editing = props.isEditing;
+    const isMe = message.sender_id === myId;
 
     const hasReaction = message.sender_reaction || message.receiver_reaction;
     const hasOpenPopup = pickerOpen || menuOpen;
 
     const myReaction = isMe ? message.sender_reaction : message.receiver_reaction;
 
+    // 2. Исправленный useEffect: теперь он зависит от функции clearActive, а не от всего props
     useEffect(() => {
         if (!pickerOpen && !menuOpen) return;
 
         function handleClickOutside(event) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-                props.clearActive();
+                clearActive();
             }
         }
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [pickerOpen, menuOpen]);
+    }, [pickerOpen, menuOpen, clearActive]); // Добавили clearActive в зависимости
 
     const formattedTime = new Date(message.sent_time).toLocaleTimeString([], {
         hour: '2-digit',
@@ -38,37 +50,37 @@ function MessageBubble(props) {
     });
 
     function togglePicker() {
-        pickerOpen ? props.clearActive() : props.setActive(message.id, 'reaction');
+        pickerOpen ? clearActive() : setActive(message.id, 'reaction');
     }
 
     function toggleMenu() {
-        menuOpen ? props.clearActive() : props.setActive(message.id, 'menu');
+        menuOpen ? clearActive() : setActive(message.id, 'menu');
     }
 
     function handlePick(emoji) {
-        props.clearActive();
-        props.onReact(message.id, emoji);
+        clearActive();
+        onReact(message.id, emoji);
     }
 
     function startEdit() {
         setEditText(message.content);
-        props.setActive(message.id, 'edit');
+        setActive(message.id, 'edit');
     }
 
     function cancelEdit() {
-        props.clearActive();
+        clearActive();
         setEditText(message.content);
     }
 
     function confirmEdit() {
         if (!editText.trim()) return;
-        props.onEdit(message.id, editText.trim());
-        props.clearActive();
+        onEdit(message.id, editText.trim());
+        clearActive();
     }
 
     function handleDelete() {
-        props.clearActive();
-        props.onDelete(message.id);
+        clearActive();
+        onDelete(message.id);
     }
 
     if (message.deleted) {
@@ -125,7 +137,7 @@ function MessageBubble(props) {
                             </button>
                         )}
 
-                        <button className={styles.replyTrigger} onClick={() => props.onReply(message)}>
+                        <button className={styles.replyTrigger} onClick={() => onReply(message)}>
                             <LuReply size={14} />
                         </button>
 

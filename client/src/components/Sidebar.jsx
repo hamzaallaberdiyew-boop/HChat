@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import styles from './Sidebar.module.css';
 import socket from '../socket';
 
@@ -9,7 +9,10 @@ function Sidebar(props) {
     const [searchError, setSearchError] = useState('');
 
     const token = localStorage.getItem('token');
-    const myId = JSON.parse(atob(token.split('.')[1])).id;
+    const myId = token ? JSON.parse(atob(token.split('.')[1])).id : null;
+
+    // Извлекаем нужные свойства из props, чтобы избежать лишних срабатываний useEffect
+    const { onlineUserIds, refreshUsers, incomingMessage, onSelectUser, selectedUserId } = props;
 
     useEffect(() => {
         if (!search.trim()) {
@@ -49,19 +52,22 @@ function Sidebar(props) {
                 console.error('Failed to fetch conversations:', data.error);
                 return;
             }
-            const usersWithOnline = data.map(user => ({ ...user, online: props.onlineUserIds.has(user.id) }));
+            // Используем деструктурированную переменную onlineUserIds
+            const usersWithOnline = data.map(user => ({ ...user, online: onlineUserIds.has(user.id) }));
             setUsers(usersWithOnline);
-            console.log('onlineUserIds:', props.onlineUserIds, 'sample user id:', data[0]?.id, typeof data[0]?.id);
+            console.log('onlineUserIds:', onlineUserIds, 'sample user id:', data[0]?.id, typeof data[0]?.id);
         }
         fetchConversations();
-    }, [props.refreshUsers]);
+    }, [refreshUsers, onlineUserIds]); // Добавили onlineUserIds, так как она используется внутри
 
     useEffect(() => {
-    setUsers(prev => prev.map(u => ({ ...u, online: props.onlineUserIds.has(u.id) })));
-}, [props.onlineUserIds]);
+        setUsers(prev => prev.map(u => ({ ...u, online: onlineUserIds.has(u.id) })));
+    }, [onlineUserIds]); // Используем чистую переменную onlineUserIds
 
-    // NEW: live-update the sidebar when a message arrives over the socket
+    // LIVE-UPDATE via Socket
     useEffect(() => {
+        if (!myId) return;
+        
         function handleReceiveMessage(message) {
             const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
 
@@ -85,31 +91,33 @@ function Sidebar(props) {
     }, [myId]);
 
     function handleClick(user) {
-        props.onSelectUser(user);
+        onSelectUser(user);
     }
 
-    function applyIncomingMessage(message) {
-    const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
+    // Оборачиваем функцию в useCallback, чтобы она не пересоздавалась при каждом рендере
+    const applyIncomingMessage = useCallback((message) => {
+        if (!myId) return;
+        const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
 
-    setUsers(prevUsers => {
-        const existing = prevUsers.find(u => u.id === otherUserId);
+        setUsers(prevUsers => {
+            const existing = prevUsers.find(u => u.id === otherUserId);
 
-        const updatedUser = {
-            ...(existing || { id: otherUserId, username: message.sender_username, online: true }),
-            last_message: message.content,
-            last_message_time: message.sent_time,
-            sender_id: message.sender_id
-        };
+            const updatedUser = {
+                ...(existing || { id: otherUserId, username: message.sender_username, online: true }),
+                last_message: message.content,
+                last_message_time: message.sent_time,
+                sender_id: message.sender_id
+            };
 
-        const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
-        return [updatedUser, ...withoutThisUser];
-    });
-}
+            const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
+            return [updatedUser, ...withoutThisUser];
+        });
+    }, [myId]);
 
-useEffect(() => {
-    if (!props.incomingMessage) return;
-    applyIncomingMessage(props.incomingMessage);
-}, [props.incomingMessage]);
+    useEffect(() => {
+        if (!incomingMessage) return;
+        applyIncomingMessage(incomingMessage);
+    }, [incomingMessage, applyIncomingMessage]); // Теперь и функция, и сообщение в зависимостях
 
     return (
         <div className={styles.div}>
@@ -119,7 +127,7 @@ useEffect(() => {
                 {(search ? searchResults : users).map((user) => (
                     <div
                         key={user.id}
-                        className={user.id === props.selectedUserId ? `${styles.chatName} ${styles.chatNameActive}` : styles.chatName}
+                        className={user.id === selectedUserId ? `${styles.chatName} ${styles.chatNameActive}` : styles.chatName}
                         onClick={() => { handleClick(user) }}
                     >
                         <div className={styles.avatarWrapper}>

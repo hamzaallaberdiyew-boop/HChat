@@ -71,20 +71,19 @@ io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
     socket.on('join', (userId) => {
+    console.log('[BACKEND] received join for user', userId);
     socket.join(userId.toString());
     socket.data.userId = userId;
 
     const wasAlreadyOnline = isUserOnline(userId);
     markUserOnline(userId, socket.id);
+    console.log('[BACKEND] onlineUsers map now:', Array.from(onlineUsers.entries()));
 
     if (!wasAlreadyOnline) {
         io.emit('userOnline', userId);
     }
 
-    // tell THIS newly-connected socket who's already online, since they
-    // missed all the userOnline events that happened before they connected
     socket.emit('onlineUsersList', Array.from(onlineUsers.keys()));
-
     console.log(`User ${userId} joined their room`);
 });
 
