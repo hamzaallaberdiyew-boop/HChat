@@ -5,10 +5,11 @@ import pool from './db.js';
 import authRoutes from "./routes/auth.js"
 import messageRoutes from './routes/messages.js';
 import { createServer } from 'http';
-import {Server} from 'socket.io';
+import { Server } from 'socket.io';
 
 dotenv.config();
 
+// На Render порт передается автоматически через переменную окружения PORT
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -39,8 +40,6 @@ const io = new Server(httpServer, {
 
 app.set('io', io);
 
-// Tracks which socket IDs belong to each user, since one person can have
-// multiple tabs/devices connected at once. Map<userId, Set<socketId>>
 const onlineUsers = new Map();
 
 function markUserOnline(userId, socketId) {
@@ -58,9 +57,9 @@ function markUserOffline(userId, socketId) {
 
     if (sockets.size === 0) {
         onlineUsers.delete(userId);
-        return true; // truly offline now, no more connections left
+        return true; 
     }
-    return false; // still has other tabs open, not actually offline
+    return false; 
 }
 
 function isUserOnline(userId) {
@@ -71,28 +70,28 @@ io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
     socket.on('join', (userId) => {
-    console.log('[BACKEND] received join for user', userId);
-    socket.join(userId.toString());
-    socket.data.userId = userId;
+        console.log('[BACKEND] received join for user', userId);
+        socket.join(userId.toString());
+        socket.data.userId = userId;
 
-    const wasAlreadyOnline = isUserOnline(userId);
-    markUserOnline(userId, socket.id);
-    console.log('[BACKEND] onlineUsers map now:', Array.from(onlineUsers.entries()));
+        const wasAlreadyOnline = isUserOnline(userId);
+        markUserOnline(userId, socket.id);
+        console.log('[BACKEND] onlineUsers map now:', Array.from(onlineUsers.entries()));
 
-    if (!wasAlreadyOnline) {
-        io.emit('userOnline', userId);
-    }
+        if (!wasAlreadyOnline) {
+            io.emit('userOnline', userId);
+        }
 
-    socket.emit('onlineUsersList', Array.from(onlineUsers.keys()));
-    console.log(`User ${userId} joined their room`);
-});
+        socket.emit('onlineUsersList', Array.from(onlineUsers.keys()));
+        console.log(`User ${userId} joined their room`);
+    });
 
     socket.on('sendMessage', (message) => {
         io.to(message.sender_id.toString()).emit('receiveMessage', message);
         io.to(message.receiver_id.toString()).emit('receiveMessage', message);
     });
 
-        socket.on('disconnect', () => {
+    socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
         const userId = socket.data.userId;
         if (userId) {
@@ -103,4 +102,10 @@ io.on('connection', (socket) => {
             }
         }
     });
+});
+
+// КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Добавлен запуск прослушивания порта.
+// Для Socket.io нужно запускать именно httpServer, а не app.listen!
+httpServer.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
