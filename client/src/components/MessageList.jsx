@@ -5,8 +5,31 @@ import MessageInput from './MessageInput';
 import socket from '../socket';
 import { LuArrowLeft } from 'react-icons/lu';
 
+function formatLastSeen(timestamp) {
+    if (!timestamp) return 'a while ago';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) {
+        return `today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return `yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    return date.toLocaleDateString();
+}
+
 function MessageList(props) {
-    // 1. Деструктурируем необходимые свойства из props
     const { selectedUser: currUser, refresh, onLocalMessage, onMessageSent, showBack, backFunc, onlineUserIds } = props;
 
     const [messages, setMessages] = useState([]);
@@ -196,11 +219,16 @@ function MessageList(props) {
         <div className={styles.div}>
             <div className={styles.chatName}>
                 {showBack && <button className={styles.backBtn} onClick={() => { backFunc("") }}><LuArrowLeft size={20} /></button>}
-                <div className={styles.avatarWrapper}>
-                    <div className={styles.avatar}>{currUser.username[0]}</div>
-                    {onlineUserIds?.has(currUser.id) && <div className={styles.onlineDot}></div>}
-                </div>
+            <div className={styles.avatarWrapper}>
+                <div className={styles.avatar}>{currUser.username[0]}</div>
+                {isCurrUserOnline && <div className={styles.onlineDot}></div>}
+            </div>
+            <div className={styles.nameBlock}>
                 <span className={styles.name}>{currUser.username}</span>
+                <span className={styles.statusLine}>
+                    {isCurrUserOnline ? 'Online' : `Last seen ${formatLastSeen(currUser.last_seen)}`}
+                </span>
+            </div>
             </div>
             <div className={styles.messageList} ref={messageListRef}>
                 {loading ? (

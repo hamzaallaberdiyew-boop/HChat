@@ -91,17 +91,22 @@ io.on('connection', (socket) => {
         io.to(message.receiver_id.toString()).emit('receiveMessage', message);
     });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-        const userId = socket.data.userId;
-        if (userId) {
-            const trulyOffline = markUserOffline(userId, socket.id);
-            if (trulyOffline) {
-                io.emit('userOffline', userId);
-                console.log(`User ${userId} is now fully offline`);
+    socket.on('disconnect', async () => {
+    console.log('User disconnected:', socket.id);
+    const userId = socket.data.userId;
+    if (userId) {
+        const trulyOffline = markUserOffline(userId, socket.id);
+        if (trulyOffline) {
+            io.emit('userOffline', userId);
+            try {
+                await pool.query('UPDATE users SET last_seen = NOW() WHERE id = $1', [userId]);
+            } catch (err) {
+                console.error('Failed to update last_seen:', err);
             }
+            console.log(`User ${userId} is now fully offline`);
         }
-    });
+    }
+});
 });
 
 // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Добавлен запуск прослушивания порта.

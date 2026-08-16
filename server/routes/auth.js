@@ -8,27 +8,31 @@ const router = express.Router();
 
 router.get('/users/search', verifyToken, async (req, res) => {
     const username = req.query.username;
-    if(!username) {
+    if (!username) {
         return res.status(400).json({ error: 'Please enter a username!' });
-    }   
+    }
     try {
-        const result = await pool.query('SELECT id, username FROM users WHERE username ILIKE $1 AND id != $2', [`%${username}%`, req.user.id]);
-        if(result.rows.length === 0) {
+        const result = await pool.query(
+            'SELECT id, username, last_seen FROM users WHERE username ILIKE $1 AND id != $2',
+            [`%${username}%`, req.user.id]
+        );
+        if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found!' });
         }
         res.status(200).json(result.rows);
-    } catch(err) {
-        console.error('Login error:', err);
+    } catch (err) {
+        console.error('Search users error:', err);
         res.status(500).json({ error: 'Something went wrong' });
     }
-})
+});
 
 router.get('/users', verifyToken, async (req, res) => {
-  try {
-    const result = await pool.query(`
+    try {
+        const result = await pool.query(`
       SELECT 
         u.id,
         u.username,
+        u.last_seen,
         MAX(m.sent_time) as last_message_time
       FROM users u
       JOIN messages m ON (
@@ -36,70 +40,74 @@ router.get('/users', verifyToken, async (req, res) => {
         (m.receiver_id = u.id AND m.sender_id = $1)
       )
       WHERE u.id != $1
-      GROUP BY u.id, u.username
+      GROUP BY u.id, u.username, u.last_seen
       ORDER BY last_message_time DESC
     `, [req.user.id]);
-    res.status(200).json(result.rows);
-  } catch(err) {
-    console.error('Get users error:', err);
-    res.status(500).json({ error: 'Something went wrong' });
-  }
+        res.status(200).json(result.rows);
+    } catch (err) {
+        console.error('Get users error:', err);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
 });
 
 router.post('/register', async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
-    if(!username || !password) {
+    if (!username || !password) {
         return res.status(400).json({ error: 'Please fill in all fields!' });
     }
-    if(username.length < 3) {
+    if (username.length < 3) {
         return res.status(400).json({ error: 'Username must be at least 3 characters!' });
     }
-    if(password.length < 6) {
+    if (password.length < 6) {
         return res.status(400).json({ error: 'Password must be at least 6 characters!' });
     }
     try {
         const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-        if(result.rows.length > 0){
-        return res.status(400).json({error:'Username already taken!'})
-    } else{
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await pool.query('INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING *',
-  [username, hashedPassword]);
-        const token = jwt.sign(
-                {id : newUser.rows[0].id, username: newUser.rows[0].username}, 
+        if (result.rows.length > 0) {
+            return res.status(400).json({ error: 'Username already taken!' });
+        } else {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const newUser = await pool.query(
+                'INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING *',
+                [username, hashedPassword]
+            );
+            const token = jwt.sign(
+                { id: newUser.rows[0].id, username: newUser.rows[0].username },
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
             res.status(200).json({ token });
-    }} catch(err) {
+        }
+    } catch (err) {
         console.error('Register error:', err);
         res.status(500).json({ error: 'Something went wrong' });
     }
-})
+});
 
 router.post('/login', async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
     try {
         const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-        if(result.rows.length > 0){
-            const isMatch = await bcrypt.compare(password, result.rows[0].password_hash)
-            if(!isMatch){
-                return res.status(400).json({error:'Invalid username or password!'})
-            } 
+        if (result.rows.length > 0) {
+            const isMatch = await bcrypt.compare(password, result.rows[0].password_hash);
+            if (!isMatch) {
+                return res.status(400).json({ error: 'Invalid username or password!' });
+            }
             const token = jwt.sign(
-                {id : result.rows[0].id, username: result.rows[0].username}, 
+                { id: result.rows[0].id, username: result.rows[0].username },
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' }
             );
             res.status(200).json({ token });
-    } else{
-        return res.status(400).json({error:'Invalid username or password!'})
-    }} catch(err) {
+        } else {
+            return res.status(400).json({ error: 'Invalid username or password!' });
+        }
+    } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ error: 'Something went wrong' });
     }
-})
+});
 
 export default router;
