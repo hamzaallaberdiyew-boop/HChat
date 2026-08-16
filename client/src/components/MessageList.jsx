@@ -38,6 +38,7 @@ function MessageList(props) {
     
     const token = localStorage.getItem('token');
     const myId = token ? JSON.parse(atob(token.split('.')[1])).id : null;
+    const isCurrUserOnline = onlineUserIds?.has(currUser.id) ?? false;
     const [replyingTo, setReplyingTo] = useState(null);
 
     function handleReplyTrigger(message) {
