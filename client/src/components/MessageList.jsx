@@ -6,27 +6,31 @@ import socket from '../socket';
 import { LuArrowLeft } from 'react-icons/lu';
 
 function formatLastSeen(timestamp) {
-    if (!timestamp) return 'a while ago';
+    if (!timestamp) return null;
+
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
-
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = diffMins / 60;
 
     const isToday = date.toDateString() === now.toDateString();
-    if (isToday) {
-        return `today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    }
 
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) {
-        return `yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    if (diffHours < 8) {
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (isToday) return `today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        if (isYesterday) return `yesterday at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
 
-    return date.toLocaleDateString();
+    if (isToday) return 'Active today';
+    if (isYesterday) return 'Active yesterday';
+
+    return null;
 }
 
 function MessageList(props) {
@@ -224,11 +228,15 @@ function MessageList(props) {
                 <div className={styles.avatar}>{currUser.username[0]}</div>
                 {isCurrUserOnline && <div className={styles.onlineDot}></div>}
             </div>
-            <div className={styles.nameBlock}>
+                        <div className={styles.nameBlock}>
                 <span className={styles.name}>{currUser.username}</span>
-                <span className={styles.statusLine}>
-                    {isCurrUserOnline ? 'Online' : `Last seen ${formatLastSeen(currUser.last_seen)}`}
-                </span>
+                {isCurrUserOnline ? (
+                    <span className={styles.statusLine}>Online</span>
+                ) : (
+                    formatLastSeen(currUser.last_seen) && (
+                        <span className={styles.statusLine}>{formatLastSeen(currUser.last_seen)}</span>
+                    )
+                )}
             </div>
             </div>
             <div className={styles.messageList} ref={messageListRef}>
