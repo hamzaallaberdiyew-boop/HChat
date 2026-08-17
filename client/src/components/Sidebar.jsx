@@ -53,7 +53,7 @@ function Sidebar(props) {
                 return;
             }
             // Используем деструктурированную переменную onlineUserIds
-            const usersWithOnline = data.map(user => ({ ...user, online: onlineUserIds.has(user.id) }));
+            const usersWithOnline = data.map(user => ({ ...user, online: onlineUserIds.has(user.id), unread_count: Number(user.unread_count) || 0 }));
             setUsers(usersWithOnline);
             console.log('onlineUserIds:', onlineUserIds, 'sample user id:', data[0]?.id, typeof data[0]?.id);
         }
@@ -63,6 +63,13 @@ function Sidebar(props) {
     useEffect(() => {
         setUsers(prev => prev.map(u => ({ ...u, online: onlineUserIds.has(u.id) })));
     }, [onlineUserIds]); // Используем чистую переменную onlineUserIds
+
+    useEffect(() => {
+        if (!props.readConversationId) return;
+        setUsers(prev => prev.map(u =>
+            u.id === props.readConversationId ? { ...u, unread_count: 0 } : u
+        ));
+    }, [props.readConversationId]);
 
     // LIVE-UPDATE via Socket
     useEffect(() => {
@@ -95,24 +102,37 @@ function Sidebar(props) {
     }
 
     // Оборачиваем функцию в useCallback, чтобы она не пересоздавалась при каждом рендере
-    const applyIncomingMessage = useCallback((message) => {
-        if (!myId) return;
+    function applyIncomingMessage(message) {
         const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
+        const isFromThem = message.sender_id !== myId;
+        const isConversationCurrentlyOpen = otherUserId === props.selectedUserId;
+
+        if (isFromThem && isConversationCurrentlyOpen) {
+            const token = localStorage.getItem('token');
+            fetch(`${process.env.REACT_APP_API_URL}/api/messages/${otherUserId}/read`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}` }
+            }).catch(err => console.error('Auto mark-as-read failed:', err));
+        }
 
         setUsers(prevUsers => {
             const existing = prevUsers.find(u => u.id === otherUserId);
+            const shouldIncrementUnread = isFromThem && !isConversationCurrentlyOpen;
 
             const updatedUser = {
-                ...(existing || { id: otherUserId, username: message.sender_username, online: true }),
+                ...(existing || { id: otherUserId, username: message.sender_username, online: true, unread_count: 0 }),
                 last_message: message.content,
                 last_message_time: message.sent_time,
-                sender_id: message.sender_id
+                sender_id: message.sender_id,
+                unread_count: shouldIncrementUnread
+                    ? (existing?.unread_count || 0) + 1
+                    : (existing?.unread_count || 0)
             };
 
             const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
             return [updatedUser, ...withoutThisUser];
         });
-    }, [myId]);
+    }
 
     useEffect(() => {
         if (!incomingMessage) return;
@@ -135,7 +155,12 @@ function Sidebar(props) {
                             {user.online && <div className={styles.onlineDot}></div>}
                         </div>
                         <div className={styles.nameBlock}>
-                            <span className={styles.name}>{user.username}</span>
+                            <div className={styles.nameRow}>
+                                <span className={styles.name}>{user.username}</span>
+                                {user.unread_count > 0 && (
+                                    <span className={styles.unreadBadge}>{user.unread_count > 9 ? '9+' : user.unread_count}</span>
+                                )}
+                            </div>
                             {user.last_message && (
                                 <span className={styles.preview}>
                                     <strong>{user.sender_id === myId ? 'Me' : user.username}:</strong> {user.last_message.length > 40 ? user.last_message.slice(0, 40) + '…' : user.last_message}

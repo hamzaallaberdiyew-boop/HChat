@@ -153,28 +153,55 @@ router.get('/conversations/latest', verifyToken, async (req, res) => {
     const myId = req.user.id;
     try {
         const result = await pool.query(
-            `SELECT * FROM (
-                SELECT DISTINCT ON (other_user_id)
-                    other_user_id,
-                    content AS last_message,
-                    sent_time AS last_message_time,
-                    sender_id
-                FROM (
-                    SELECT
-                        m.*,
-                        CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END AS other_user_id
-                    FROM messages m
-                    WHERE sender_id = $1 OR receiver_id = $1
-                ) sub
-                ORDER BY other_user_id, sent_time DESC
-            ) latest
-            JOIN users u ON u.id = latest.other_user_id
-            ORDER BY last_message_time DESC`,
+            `SELECT
+                latest.*,
+                COALESCE(unread.unread_count, 0) AS unread_count
+             FROM (
+                SELECT * FROM (
+                    SELECT DISTINCT ON (other_user_id)
+                        other_user_id,
+                        content AS last_message,
+                        sent_time AS last_message_time,
+                        sender_id
+                    FROM (
+                        SELECT
+                            m.*,
+                            CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END AS other_user_id
+                        FROM messages m
+                        WHERE sender_id = $1 OR receiver_id = $1
+                    ) sub
+                    ORDER BY other_user_id, sent_time DESC
+                ) inner_latest
+                JOIN users u ON u.id = inner_latest.other_user_id
+             ) latest
+             LEFT JOIN (
+                SELECT sender_id, COUNT(*) AS unread_count
+                FROM messages
+                WHERE receiver_id = $1 AND read = FALSE
+                GROUP BY sender_id
+             ) unread ON unread.sender_id = latest.other_user_id
+             ORDER BY latest.last_message_time DESC`,
             [myId]
         );
         res.status(200).json(result.rows);
     } catch (err) {
         console.error('Get latest conversations error:', err);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
+
+router.patch('/:userId/read', verifyToken, async (req, res) => {
+    const myId = req.user.id;
+    const otherUserId = req.params.userId;
+
+    try {
+        await pool.query(
+            'UPDATE messages SET read = TRUE WHERE sender_id = $1 AND receiver_id = $2 AND read = FALSE',
+            [otherUserId, myId]
+        );
+        res.status(200).json({ success: true });
+    } catch (err) {
+        console.error('Mark as read error:', err);
         res.status(500).json({ error: 'Something went wrong' });
     }
 });

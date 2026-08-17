@@ -99,6 +99,38 @@ function MessageList(props) {
         };
     }, [currUser, onLocalMessage]); // Зависимости обновлены
 
+    useEffect(() => {
+    async function fetchMessages() {
+        if (!currUser) return;
+        setLoading(true);
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${currUser.id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+            setMessages(data);
+
+            // mark this conversation's messages as read now that it's open
+            await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${currUser.id}/read`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            props.onConversationRead?.(currUser.id);
+        } catch (err) {
+            console.error('Fetch messages error:', err);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    fetchMessages();
+}, [currUser, refresh]);
+
     // 3. Исправленный useEffect для загрузки сообщений
     useEffect(() => {
         async function fetchMessages() {

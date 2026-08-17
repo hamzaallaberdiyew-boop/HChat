@@ -85,6 +85,22 @@ router.post('/register', async (req, res) => {
     }
 });
 
+router.patch('/:userId/read', verifyToken, async (req, res) => {
+    const myId = req.user.id;
+    const otherUserId = req.params.userId;
+
+    try {
+        await pool.query(
+            'UPDATE messages SET read = TRUE WHERE sender_id = $1 AND receiver_id = $2 AND read = FALSE',
+            [otherUserId, myId]
+        );
+        res.status(200).json({ success: true });
+    } catch (err) {
+        console.error('Mark as read error:', err);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
+
 router.post('/login', async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;

@@ -17,6 +17,7 @@ function Chat(){
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [latestMessage, setLatestMessage] = useState(null);
     const [onlineUserIds, setOnlineUserIds] = useState(new Set());
+    const [readConversationId, setReadConversationId] = useState(null);
     const showSidebarF = (isMobile && !selectedUser) || (!isMobile && showSidebar);
     const showChat = (isMobile && selectedUser) || (!isMobile)
     const showBack = isMobile;
@@ -99,12 +100,13 @@ function Chat(){
         <div className={styles.container}>
         {!isMobile && <div className={styles.profileSection}><Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/></div>}
         <div className={styles.contentSection}>
-        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers} incomingMessage={latestMessage} onlineUserIds={onlineUserIds} />}
+        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers} incomingMessage={latestMessage} onlineUserIds={onlineUserIds} readConversationId={readConversationId}/>}
         {showChat && <div className={styles.chatArea}>
             <MessageList showBack={showBack} selectedUser={selectedUser} backFunc={setSelectedUser} refresh={refresh}
                 onMessageSent={() => { setRefresh(r => r + 1); setRefreshUsers(r => r + 1); }}
                 onLocalMessage={setLatestMessage}
                 onlineUserIds={onlineUserIds}
+                onConversationRead={setReadConversationId}
             />
         </div>}</div>
         </div>

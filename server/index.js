@@ -91,6 +91,14 @@ io.on('connection', (socket) => {
         io.to(message.receiver_id.toString()).emit('receiveMessage', message);
     });
 
+    socket.on('typing', ({ senderId, receiverId }) => {
+        io.to(receiverId.toString()).emit('userTyping', senderId);
+    });
+
+    socket.on('stoppedTyping', ({ senderId, receiverId }) => {
+        io.to(receiverId.toString()).emit('userStoppedTyping', senderId);
+    });
+
     socket.on('disconnect', async () => {
     console.log('User disconnected:', socket.id);
     const userId = socket.data.userId;
