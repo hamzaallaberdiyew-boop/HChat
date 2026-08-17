@@ -102,37 +102,38 @@ function Sidebar(props) {
     }
 
     // Оборачиваем функцию в useCallback, чтобы она не пересоздавалась при каждом рендере
-    function applyIncomingMessage(message) {
-        const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
-        const isFromThem = message.sender_id !== myId;
-        const isConversationCurrentlyOpen = otherUserId === props.selectedUserId;
+    // 1. Wrap the function in useCallback so its reference remains stable
+const applyIncomingMessage = useCallback((message) => {
+    const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
+    const isFromThem = message.sender_id !== myId;
+    const isConversationCurrentlyOpen = otherUserId === props.selectedUserId;
 
-        if (isFromThem && isConversationCurrentlyOpen) {
-            const token = localStorage.getItem('token');
-            fetch(`${process.env.REACT_APP_API_URL}/api/messages/${otherUserId}/read`, {
-                method: 'PATCH',
-                headers: { Authorization: `Bearer ${token}` }
-            }).catch(err => console.error('Auto mark-as-read failed:', err));
-        }
-
-        setUsers(prevUsers => {
-            const existing = prevUsers.find(u => u.id === otherUserId);
-            const shouldIncrementUnread = isFromThem && !isConversationCurrentlyOpen;
-
-            const updatedUser = {
-                ...(existing || { id: otherUserId, username: message.sender_username, online: true, unread_count: 0 }),
-                last_message: message.content,
-                last_message_time: message.sent_time,
-                sender_id: message.sender_id,
-                unread_count: shouldIncrementUnread
-                    ? (existing?.unread_count || 0) + 1
-                    : (existing?.unread_count || 0)
-            };
-
-            const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
-            return [updatedUser, ...withoutThisUser];
-        });
+    if (isFromThem && isConversationCurrentlyOpen) {
+        const token = localStorage.getItem('token');
+        fetch(`${process.env.REACT_APP_API_URL}/api/messages/${otherUserId}/read`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${token}` }
+        }).catch(err => console.error('Auto mark-as-read failed:', err));
     }
+
+    setUsers(prevUsers => {
+        const existing = prevUsers.find(u => u.id === otherUserId);
+        const shouldIncrementUnread = isFromThem && !isConversationCurrentlyOpen;
+
+        const updatedUser = {
+            ...(existing || { id: otherUserId, username: message.sender_username, online: true, unread_count: 0 }),
+            last_message: message.content,
+            last_message_time: message.sent_time,
+            sender_id: message.sender_id,
+            unread_count: shouldIncrementUnread
+                ? (existing?.unread_count || 0) + 1
+                : (existing?.unread_count || 0)
+        };
+
+        const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
+        return [updatedUser, ...withoutThisUser];
+    });
+}, [myId, props.selectedUserId]); // 👈 Add dependencies here (variables used from outside the scope)
 
     useEffect(() => {
         if (!incomingMessage) return;

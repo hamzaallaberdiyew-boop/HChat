@@ -34,7 +34,7 @@ function formatLastSeen(timestamp) {
 }
 
 function MessageList(props) {
-    const { selectedUser: currUser, refresh, onLocalMessage, onMessageSent, showBack, backFunc, onlineUserIds } = props;
+    const { selectedUser: currUser, refresh, onLocalMessage, onMessageSent, showBack, backFunc, onlineUserIds, onConversationRead } = props;
 
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -115,12 +115,14 @@ function MessageList(props) {
             const data = await response.json();
             setMessages(data);
 
-            // mark this conversation's messages as read now that it's open
+            // Mark this conversation's messages as read now that it's open
             await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${currUser.id}/read`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` }
             });
-            props.onConversationRead?.(currUser.id);
+            
+            // ✅ Using the clean destructured variable name here
+            onConversationRead?.(currUser.id); 
         } catch (err) {
             console.error('Fetch messages error:', err);
         } finally {
@@ -129,33 +131,8 @@ function MessageList(props) {
     }
 
     fetchMessages();
-}, [currUser, refresh]);
+}, [currUser, refresh, onConversationRead]); // ✅ Everything used inside is now safe in dependencies!
 
-    // 3. Исправленный useEffect для загрузки сообщений
-    useEffect(() => {
-        async function fetchMessages() {
-            if (!currUser) return;
-            setLoading(true);
-            
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${currUser.id}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-                
-                const data = await response.json();
-                setMessages(data);
-            } catch (err) {
-                console.error('Fetch messages error:', err);
-            } finally {
-                setLoading(false);
-            }
-        }
-        
-        fetchMessages();
-    }, [currUser, refresh]); // Используем переменную refresh вместо props.refresh
 
     if (!currUser) {
         return (
