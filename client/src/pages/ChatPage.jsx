@@ -70,8 +70,6 @@ function Chat(){
     socket.on('userOnline', handleUserOnline);
     socket.on('userOffline', handleUserOffline);
 
-    // if the socket is ALREADY connected by the time this effect runs
-    // (e.g. on fast reconnects), join immediately instead of waiting
     if (socket.connected) {
         socket.emit('join', myId);
     }
@@ -100,7 +98,7 @@ function Chat(){
         <div className={styles.container}>
         {!isMobile && <div className={styles.profileSection}><Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/></div>}
         <div className={styles.contentSection}>
-        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers} incomingMessage={latestMessage} onlineUserIds={onlineUserIds} readConversationId={readConversationId} selectedUserId={selectedUserId}/>}
+        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers} incomingMessage={latestMessage} onlineUserIds={onlineUserIds} readConversationId={readConversationId} selectedUserId={selectedUser?.id}/>}
         {showChat && <div className={styles.chatArea}>
             <MessageList showBack={showBack} selectedUser={selectedUser} backFunc={setSelectedUser} refresh={refresh}
                 onMessageSent={() => { setRefresh(r => r + 1); setRefreshUsers(r => r + 1); }}
