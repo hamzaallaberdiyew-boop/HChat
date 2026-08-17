@@ -81,7 +81,7 @@ useEffect(() => {
         const isFromThem = message.sender_id !== myId;
         
         // 🔥 FIX: Check directly against the current selected prop in real-time!
-        const isConversationCurrentlyOpen = otherUserId === selectedUserId;
+        const isConversationCurrentlyOpen = Number(otherUserId) === Number(selectedUserId);
 
         if (isFromThem && isConversationCurrentlyOpen) {
             const token = localStorage.getItem('token');
