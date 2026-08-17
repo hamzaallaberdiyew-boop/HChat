@@ -72,30 +72,48 @@ function Sidebar(props) {
     }, [props.readConversationId]);
 
     // LIVE-UPDATE via Socket
-    useEffect(() => {
-        if (!myId) return;
+    // In Sidebar: Replace the socket useEffect block with this:
+useEffect(() => {
+    if (!myId) return;
+    
+    function handleReceiveMessage(message) {
+        const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
+        const isFromThem = message.sender_id !== myId;
         
-        function handleReceiveMessage(message) {
-            const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
+        // 🔥 FIX: Check directly against the current selected prop in real-time!
+        const isConversationCurrentlyOpen = otherUserId === selectedUserId;
 
-            setUsers(prevUsers => {
-                const existing = prevUsers.find(u => u.id === otherUserId);
-
-                const updatedUser = {
-                    ...(existing || { id: otherUserId, username: message.sender_username, online: true }),
-                    last_message: message.content,
-                    last_message_time: message.sent_time,
-                    sender_id: message.sender_id
-                };
-
-                const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
-                return [updatedUser, ...withoutThisUser];
-            });
+        if (isFromThem && isConversationCurrentlyOpen) {
+            const token = localStorage.getItem('token');
+            fetch(`${process.env.REACT_APP_API_URL}/api/messages/${otherUserId}/read`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}` }
+            }).catch(err => console.error('Real-time auto-read failed:', err));
         }
 
-        socket.on('receiveMessage', handleReceiveMessage);
-        return () => socket.off('receiveMessage', handleReceiveMessage);
-    }, [myId]);
+        setUsers(prevUsers => {
+            const existing = prevUsers.find(u => u.id === otherUserId);
+            const shouldIncrementUnread = isFromThem && !isConversationCurrentlyOpen;
+
+            const updatedUser = {
+                ...(existing || { id: otherUserId, username: message.sender_username, online: true, unread_count: 0 }),
+                last_message: message.content,
+                last_message_time: message.sent_time,
+                sender_id: message.sender_id,
+                unread_count: shouldIncrementUnread
+                    ? (existing?.unread_count || 0) + 1
+                    : (existing?.unread_count || 0)
+            };
+
+            const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
+            return [updatedUser, ...withoutThisUser];
+        });
+    }
+
+    socket.on('receiveMessage', handleReceiveMessage);
+    return () => socket.off('receiveMessage', handleReceiveMessage);
+}, [myId, selectedUserId]); // 🔥 Added selectedUserId here so the socket handler knows who you are talking to!
+
 
     function handleClick(user) {
         onSelectUser(user);
