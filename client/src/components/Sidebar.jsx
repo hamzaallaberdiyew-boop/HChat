@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import styles from './Sidebar.module.css';
 import socket from '../socket';
 
@@ -11,8 +11,13 @@ function Sidebar(props) {
     const token = localStorage.getItem('token');
     const myId = token ? JSON.parse(atob(token.split('.')[1])).id : null;
 
-    // Извлекаем нужные свойства из props, чтобы избежать лишних срабатываний useEffect
     const { onlineUserIds, refreshUsers, incomingMessage, onSelectUser, selectedUserId } = props;
+
+    // Kept in sync every render without being a dependency of the fetch
+    // effect below — lets fetchConversations read current online status
+    // without re-fetching the whole list every time someone's status flips.
+    const onlineUserIdsRef = useRef(onlineUserIds);
+    onlineUserIdsRef.current = onlineUserIds;
 
     useEffect(() => {
         if (!search.trim()) {
@@ -20,11 +25,15 @@ function Sidebar(props) {
             setSearchError('');
             return;
         }
+
+        const controller = new AbortController();
+
         async function searchUsers() {
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/search?username=${search}`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
+                    signal: controller.signal
                 });
                 const data = await response.json();
                 if (!response.ok) {
@@ -35,12 +44,22 @@ function Sidebar(props) {
                     setSearchError('');
                 }
             } catch (err) {
-                console.error('Search error:', err);
+                if (err.name !== 'AbortError') {
+                    console.error('Search error:', err);
+                }
             }
         }
         searchUsers();
+
+        // Cancels the in-flight request if the user keeps typing, so a slow
+        // earlier response can't land after a faster later one and show
+        // stale results.
+        return () => controller.abort();
     }, [search]);
 
+    // Only re-fetches when refreshUsers changes — NOT on every online/offline
+    // flicker, which would otherwise overwrite live unread counts / last
+    // messages with a stale server snapshot on every status change.
     useEffect(() => {
         async function fetchConversations() {
             const token = localStorage.getItem('token');
@@ -52,17 +71,21 @@ function Sidebar(props) {
                 console.error('Failed to fetch conversations:', data.error);
                 return;
             }
-            // Используем деструктурированную переменную onlineUserIds
-            const usersWithOnline = data.map(user => ({ ...user, online: onlineUserIds.has(user.id), unread_count: Number(user.unread_count) || 0 }));
+            const usersWithOnline = data.map(user => ({
+                ...user,
+                online: onlineUserIdsRef.current.has(user.id),
+                unread_count: Number(user.unread_count) || 0
+            }));
             setUsers(usersWithOnline);
-            console.log('onlineUserIds:', onlineUserIds, 'sample user id:', data[0]?.id, typeof data[0]?.id);
         }
         fetchConversations();
-    }, [refreshUsers, onlineUserIds]); // Добавили onlineUserIds, так как она используется внутри
+    }, [refreshUsers]);
 
+    // Keeps online dots in sync whenever presence changes, without touching
+    // unread counts / last messages / ordering.
     useEffect(() => {
         setUsers(prev => prev.map(u => ({ ...u, online: onlineUserIds.has(u.id) })));
-    }, [onlineUserIds]); // Используем чистую переменную onlineUserIds
+    }, [onlineUserIds]);
 
     useEffect(() => {
         if (!props.readConversationId) return;
@@ -71,16 +94,15 @@ function Sidebar(props) {
         ));
     }, [props.readConversationId]);
 
-    // LIVE-UPDATE via Socket
-    // In Sidebar: Replace the socket useEffect block with this:
-useEffect(() => {
-    if (!myId) return;
-    
-    function handleReceiveMessage(message) {
-        const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
-        const isFromThem = message.sender_id !== myId;
-        
-        // 🔥 FIX: Check directly against the current selected prop in real-time!
+    // Single source of truth for "a message affects the sidebar" — used by
+    // both the live socket listener (covers every conversation, open or
+    // not) and the incomingMessage prop path (covers optimistic sends for
+    // the currently open conversation, before the server round-trip).
+    // Consolidated from two near-duplicate implementations that used to
+    // disagree on ID coercion (Number() in one, none in the other).
+    const applyMessageUpdate = useCallback((message) => {
+        const otherUserId = Number(message.sender_id) === Number(myId) ? message.receiver_id : message.sender_id;
+        const isFromThem = Number(message.sender_id) !== Number(myId);
         const isConversationCurrentlyOpen = Number(otherUserId) === Number(selectedUserId);
 
         if (isFromThem && isConversationCurrentlyOpen) {
@@ -88,15 +110,24 @@ useEffect(() => {
             fetch(`${process.env.REACT_APP_API_URL}/api/messages/${otherUserId}/read`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` }
-            }).catch(err => console.error('Real-time auto-read failed:', err));
+            }).catch(err => console.error('Auto mark-as-read failed:', err));
         }
 
         setUsers(prevUsers => {
-            const existing = prevUsers.find(u => u.id === otherUserId);
+            const existing = prevUsers.find(u => Number(u.id) === Number(otherUserId));
             const shouldIncrementUnread = isFromThem && !isConversationCurrentlyOpen;
 
             const updatedUser = {
-                ...(existing || { id: otherUserId, username: message.sender_username, online: true, unread_count: 0 }),
+                ...(existing || {
+                    id: otherUserId,
+                    // Backend doesn't send a username on the message payload
+                    // itself — fall back to a placeholder rather than
+                    // crashing on user.username[0] in render for a
+                    // brand-new conversation partner not yet in the list.
+                    username: message.sender_username || 'New chat',
+                    online: true,
+                    unread_count: 0
+                }),
                 last_message: message.content,
                 last_message_time: message.sent_time,
                 sender_id: message.sender_id,
@@ -105,58 +136,25 @@ useEffect(() => {
                     : (existing?.unread_count || 0)
             };
 
-            const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
+            const withoutThisUser = prevUsers.filter(u => Number(u.id) !== Number(otherUserId));
             return [updatedUser, ...withoutThisUser];
         });
-    }
+    }, [myId, selectedUserId]);
 
-    socket.on('receiveMessage', handleReceiveMessage);
-    return () => socket.off('receiveMessage', handleReceiveMessage);
-}, [myId, selectedUserId]); // 🔥 Added selectedUserId here so the socket handler knows who you are talking to!
+    useEffect(() => {
+        if (!myId) return;
+        socket.on('receiveMessage', applyMessageUpdate);
+        return () => socket.off('receiveMessage', applyMessageUpdate);
+    }, [myId, applyMessageUpdate]);
 
+    useEffect(() => {
+        if (!incomingMessage) return;
+        applyMessageUpdate(incomingMessage);
+    }, [incomingMessage, applyMessageUpdate]);
 
     function handleClick(user) {
         onSelectUser(user);
     }
-
-    // Оборачиваем функцию в useCallback, чтобы она не пересоздавалась при каждом рендере
-    // 1. Wrap the function in useCallback so its reference remains stable
-const applyIncomingMessage = useCallback((message) => {
-    const otherUserId = message.sender_id === myId ? message.receiver_id : message.sender_id;
-    const isFromThem = message.sender_id !== myId;
-    const isConversationCurrentlyOpen = otherUserId === props.selectedUserId;
-
-    if (isFromThem && isConversationCurrentlyOpen) {
-        const token = localStorage.getItem('token');
-        fetch(`${process.env.REACT_APP_API_URL}/api/messages/${otherUserId}/read`, {
-            method: 'PATCH',
-            headers: { Authorization: `Bearer ${token}` }
-        }).catch(err => console.error('Auto mark-as-read failed:', err));
-    }
-
-    setUsers(prevUsers => {
-        const existing = prevUsers.find(u => u.id === otherUserId);
-        const shouldIncrementUnread = isFromThem && !isConversationCurrentlyOpen;
-
-        const updatedUser = {
-            ...(existing || { id: otherUserId, username: message.sender_username, online: true, unread_count: 0 }),
-            last_message: message.content,
-            last_message_time: message.sent_time,
-            sender_id: message.sender_id,
-            unread_count: shouldIncrementUnread
-                ? (existing?.unread_count || 0) + 1
-                : (existing?.unread_count || 0)
-        };
-
-        const withoutThisUser = prevUsers.filter(u => u.id !== otherUserId);
-        return [updatedUser, ...withoutThisUser];
-    });
-}, [myId, props.selectedUserId]); // 👈 Add dependencies here (variables used from outside the scope)
-
-    useEffect(() => {
-        if (!incomingMessage) return;
-        applyIncomingMessage(incomingMessage);
-    }, [incomingMessage, applyIncomingMessage]); // Теперь и функция, и сообщение в зависимостях
 
     return (
         <div className={styles.div}>
@@ -170,7 +168,7 @@ const applyIncomingMessage = useCallback((message) => {
                         onClick={() => { handleClick(user) }}
                     >
                         <div className={styles.avatarWrapper}>
-                            <div className={styles.avatar}>{user.username[0]}</div>
+                            <div className={styles.avatar}>{user.username ? user.username[0] : '?'}</div>
                             {user.online && <div className={styles.onlineDot}></div>}
                         </div>
                         <div className={styles.nameBlock}>
