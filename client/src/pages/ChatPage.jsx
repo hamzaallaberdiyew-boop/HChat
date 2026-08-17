@@ -100,7 +100,7 @@ function Chat(){
         <div className={styles.container}>
         {!isMobile && <div className={styles.profileSection}><Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/></div>}
         <div className={styles.contentSection}>
-        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers} incomingMessage={latestMessage} onlineUserIds={onlineUserIds} readConversationId={readConversationId}/>}
+        {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers} incomingMessage={latestMessage} onlineUserIds={onlineUserIds} readConversationId={readConversationId} selectedUserId={selectedUserId}/>}
         {showChat && <div className={styles.chatArea}>
             <MessageList showBack={showBack} selectedUser={selectedUser} backFunc={setSelectedUser} refresh={refresh}
                 onMessageSent={() => { setRefresh(r => r + 1); setRefreshUsers(r => r + 1); }}

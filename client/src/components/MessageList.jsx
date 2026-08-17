@@ -63,13 +63,23 @@ function MessageList(props) {
         setActiveAction(null);
     }
 
-    useEffect(() => {
-        if (messageListRef.current) {
-            messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
-        }
-    }, [messages.length, currUser]);
+    // Scroll to bottom whenever the conversation switches or a new message
+    // arrives. Keyed off the last message's id (not messages.length) so it
+    // fires correctly even when switching between two conversations that
+    // happen to have the same message count, and doesn't re-fire on
+    // in-place edits/reactions (those change content, not the last id).
+    const lastMessage = messages[messages.length - 1];
+    const lastMessageId = lastMessage ? lastMessage.id : null;
 
-    // 2. Исправленный useEffect для сокетов: теперь зависит от функции onLocalMessage, а не от всего props
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => {
+            if (messageListRef.current) {
+                messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+            }
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [lastMessageId, currUser]);
+
     useEffect(() => {
         if (!currUser) return;
 
@@ -81,7 +91,7 @@ function MessageList(props) {
                     return [...prev, message];
                 });
             }
-            onLocalMessage?.(message); // Используем чистую переменную из деструктуризации
+            onLocalMessage?.(message);
         });
 
         socket.on('reactionUpdate', (updatedMessage) => {
@@ -97,41 +107,40 @@ function MessageList(props) {
             socket.off('reactionUpdate');
             socket.off('messageUpdate');
         };
-    }, [currUser, onLocalMessage]); // Зависимости обновлены
+    }, [currUser, onLocalMessage]);
 
     useEffect(() => {
-    async function fetchMessages() {
-        if (!currUser) return;
-        setLoading(true);
+        async function fetchMessages() {
+            if (!currUser) return;
+            setLoading(true);
 
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${currUser.id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${currUser.id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
 
-            const data = await response.json();
-            setMessages(data);
+                const data = await response.json();
+                setMessages(data);
 
-            // Mark this conversation's messages as read now that it's open
-            await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${currUser.id}/read`, {
-                method: 'PATCH',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            // ✅ Using the clean destructured variable name here
-            onConversationRead?.(currUser.id); 
-        } catch (err) {
-            console.error('Fetch messages error:', err);
-        } finally {
-            setLoading(false);
+                // Mark this conversation's messages as read now that it's open
+                await fetch(`${process.env.REACT_APP_API_URL}/api/messages/${currUser.id}/read`, {
+                    method: 'PATCH',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                onConversationRead?.(currUser.id);
+            } catch (err) {
+                console.error('Fetch messages error:', err);
+            } finally {
+                setLoading(false);
+            }
         }
-    }
 
-    fetchMessages();
-}, [currUser, refresh, onConversationRead]); // ✅ Everything used inside is now safe in dependencies!
+        fetchMessages();
+    }, [currUser, refresh, onConversationRead]);
 
 
     if (!currUser) {
@@ -282,4 +291,3 @@ function MessageList(props) {
 }
 
 export default MessageList;
-
