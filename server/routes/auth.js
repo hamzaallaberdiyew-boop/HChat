@@ -85,22 +85,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.patch('/:userId/read', verifyToken, async (req, res) => {
-    const myId = req.user.id;
-    const otherUserId = req.params.userId;
-
-    try {
-        await pool.query(
-            'UPDATE messages SET read = TRUE WHERE sender_id = $1 AND receiver_id = $2 AND read = FALSE',
-            [otherUserId, myId]
-        );
-        res.status(200).json({ success: true });
-    } catch (err) {
-        console.error('Mark as read error:', err);
-        res.status(500).json({ error: 'Something went wrong' });
-    }
-});
-
 router.post('/login', async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
@@ -122,6 +106,33 @@ router.post('/login', async (req, res) => {
         }
     } catch (err) {
         console.error('Login error:', err);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
+
+router.get('/users/me', verifyToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT id, username, avatar_color, avatar_icon FROM users WHERE id = $1',
+            [req.user.id]
+        );
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error('Get profile error:', err);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
+
+router.patch('/users/me/avatar', verifyToken, async (req, res) => {
+    const { avatar_color, avatar_icon } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE users SET avatar_color = $1, avatar_icon = $2 WHERE id = $3 RETURNING id, username, avatar_color, avatar_icon',
+            [avatar_color || '#4f5fae', avatar_icon || null, req.user.id]
+        );
+        res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error('Update avatar error:', err);
         res.status(500).json({ error: 'Something went wrong' });
     }
 });

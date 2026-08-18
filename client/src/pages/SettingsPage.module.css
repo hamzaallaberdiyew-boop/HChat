@@ -38,3 +38,111 @@
     color: #56618a;
     font-size: 14px;
 }
+
+.section {
+    max-width: 480px;
+    margin-top: 24px;
+}
+
+.sectionTitle {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 16px;
+}
+
+.previewRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.previewName {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.pickerGroup {
+    margin-bottom: 20px;
+}
+
+.pickerLabel {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 8px;
+}
+
+.colorGrid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.colorSwatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease;
+}
+
+.colorSwatch:hover {
+    transform: scale(1.1);
+}
+
+.iconGrid {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.iconSwatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg-card);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.iconSwatch:hover {
+    transform: scale(1.05);
+}
+
+.iconSwatchActive {
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+
+.saveButton {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.saveButton:hover {
+    background: var(--accent-hover);
+}
+
+.saveButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
