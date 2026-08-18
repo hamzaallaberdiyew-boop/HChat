@@ -72,13 +72,36 @@ function MessageList(props) {
     const lastMessageId = lastMessage ? lastMessage.id : null;
 
     useEffect(() => {
-        const frame = requestAnimationFrame(() => {
-            if (messageListRef.current) {
-                messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
-            }
-        });
-        return () => cancelAnimationFrame(frame);
-    }, [lastMessageId, currUser]);
+    const container = messageListRef.current;
+    if (!container) return;
+
+    const scrollToBottom = () => {
+        container.scrollTop = container.scrollHeight;
+    };
+
+    // Scroll once immediately for the common case (no async content)
+    scrollToBottom();
+
+    // Keep scrolling to bottom as the container's content grows —
+    // catches late-loading images/avatars/fonts that expand scrollHeight
+    // after the initial paint, which a single requestAnimationFrame can miss.
+    const observer = new ResizeObserver(() => {
+        scrollToBottom();
+    });
+    observer.observe(container);
+
+    // Stop "chasing" the bottom after a short window, so that once
+    // everything has settled, scrolling back up to read history isn't
+    // fought by an observer that keeps yanking you back down.
+    const stopChasing = setTimeout(() => {
+        observer.disconnect();
+    }, 800);
+
+    return () => {
+        observer.disconnect();
+        clearTimeout(stopChasing);
+    };
+}, [lastMessageId, currUser]);
 
     useEffect(() => {
         if (!currUser) return;
