@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LuArrowLeft, LuCheck } from 'react-icons/lu';
 import styles from './SettingsPage.module.css';
 import Avatar from '../components/Avatar';
+import { AVATAR_COLORS, AVATAR_ICONS } from '../constants/avatarOptions';
 
 function SettingsPage() {
     const navigate = useNavigate();
@@ -11,21 +12,6 @@ function SettingsPage() {
     const [selectedIcon, setSelectedIcon] = useState(null);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
-
-    const AVATAR_COLORS = [
-    '#4f5fae', '#e15252', '#4ade80', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#64748b'
-    ];
-
-    const AVATAR_ICONS = [
-        { id: 'cat', emoji: '🐱' },
-        { id: 'dog', emoji: '🐶' },
-        { id: 'fox', emoji: '🦊' },
-        { id: 'panda', emoji: '🐼' },
-        { id: 'robot', emoji: '🤖' },
-        { id: 'ghost', emoji: '👻' },
-        { id: 'star', emoji: '⭐' },
-        { id: 'fire', emoji: '🔥' }
-    ];
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -71,7 +57,6 @@ function SettingsPage() {
 
     const previewUser = { username, avatar_color: selectedColor, avatar_icon: selectedIcon };
 
-    
     return (
         <div className={styles.page}>
             <div className={styles.header}>

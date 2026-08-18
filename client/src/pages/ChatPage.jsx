@@ -96,7 +96,7 @@ function Chat(){
 
     return (
         <div className={styles.container}>
-        {!isMobile && <div className={styles.profileSection}><Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar}/></div>}
+        {!isMobile && <div className={styles.profileSection}><Profile onSelectUser={setSelectedUser} refreshUsers={refreshUsers} setShowSidebar={setShowSidebar} /></div>}
         <div className={styles.contentSection}>
         {showSidebarF && <Sidebar onSelectUser={setSelectedUser} refreshUsers={refreshUsers} incomingMessage={latestMessage} onlineUserIds={onlineUserIds} readConversationId={readConversationId} selectedUserId={selectedUser?.id}/>}
         {showChat && <div className={styles.chatArea}>
