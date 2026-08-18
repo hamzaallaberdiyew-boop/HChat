@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import styles from "./Sidebar.module.css";
 import socket from "../socket";
+import Avatar from '../components/Avatar';
 
 function Sidebar(props) {
     const [users, setUsers] = useState([]);
@@ -410,15 +411,7 @@ function Sidebar(props) {
                                         styles.avatarWrapper
                                     }
                                 >
-                                    <div
-                                        className={
-                                            styles.avatar
-                                        }
-                                    >
-                                        {user.username
-                                            ? user.username[0].toUpperCase()
-                                            : "?"}
-                                    </div>
+                                    <Avatar user={user} size={40} />
 
                                     {user.online && (
                                         <div
@@ -454,8 +447,8 @@ function Sidebar(props) {
                                                 }
                                             >
                                                 {unreadCount >
-                                                9
-                                                    ? "9+"
+                                                4
+                                                    ? "4+"
                                                     : unreadCount}
                                             </span>
                                         )}

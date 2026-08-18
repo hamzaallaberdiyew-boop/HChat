@@ -4,6 +4,7 @@ import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import socket from '../socket';
 import { LuArrowLeft } from 'react-icons/lu';
+import Avatar from '../components/Avatar';
 
 function formatLastSeen(timestamp) {
     if (!timestamp) return null;
@@ -266,7 +267,7 @@ function MessageList(props) {
             <div className={styles.chatName}>
                 {showBack && <button className={styles.backBtn} onClick={() => { backFunc("") }}><LuArrowLeft size={20} /></button>}
             <div className={styles.avatarWrapper}>
-                <div className={styles.avatar}>{currUser.username[0]}</div>
+                <Avatar user={currUser} size={40} />
                 {isCurrUserOnline && <div className={styles.onlineDot}></div>}
             </div>
                         <div className={styles.nameBlock}>
